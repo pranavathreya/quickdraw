@@ -99,7 +99,7 @@ void drawRays()
 		{
 			rayEndPoint.rayX = playerX + cos(rayAngle)*PLAYERWANDLENGTH*i;
 			rayEndPoint.rayY = playerY - sin(rayAngle)*PLAYERWANDLENGTH*i;
-			i += 1.0;
+			i += 1.0e-3;
 		}
 		*rayEndPointArrayAddress++ = rayEndPoint;	// Append point to array
 		
@@ -114,18 +114,16 @@ void drawRays()
 
 void drawColumns()
 {
-	for (int i=52; i!=0; i--)
+	for (int i=0; i<52; i++)
 	{
 		float columnHeight = fabs( cos(rayEndPointArray[i].rayAngle) / (rayEndPointArray[i].rayX - playerX) ) * 2.5e4;
 
 		glColor3f(0,1,0);
 		glLineWidth(9);
 		glBegin(GL_LINES);
-		glVertex2f(512+i*9, 256-columnHeight/2);
-		glVertex2f(512+i*9, 256+columnHeight/2);
+		glVertex2f(512+(52-i)*9, 256-columnHeight/2);
+		glVertex2f(512+(52-i)*9, 256+columnHeight/2);
 		glEnd();
-		
-		printf("rayEndPointArray[%d]: %f, %f, %f, %f\n", i, rayEndPointArray[i].rayX, rayEndPointArray[i].rayY, rayEndPointArray[i].rayAngle, columnHeight);
 	}
 }
 
