@@ -7,29 +7,30 @@
 #define PLAYERWANDLENGTH 18.0
 #define RAYADDENDUM 1.5
 
-struct point
+struct RayEndPoint
 {
-	float x;
-	float y;
+	float rayX;
+	float rayY;
+	float rayAngle;
 };
 
-float px, py; // player position
-float pdx, pdy, pa; // player change in position and angle
+float playerX, playerY; // player position
+float playerDeltaX, playerDeltaY, playerAngle; // player change in position and angle
 float blockPadding=2;
 float displacementFactor = 0.5;
 float angularUnitOfChange = 0.15;
-struct point rayEndPoints[200];
+struct RayEndPoint rayEndPointArray[53];
 
 
 void init()
 {
 	glClearColor(0.3,0.3,0.3,0);
 	gluOrtho2D(0,WIDTH,HEIGHT,0);
-	px = 300;
-       	py = 300;
-	pa = PI * 0.5;
-	pdx = cos(pa) *  PLAYERWANDLENGTH;
-	pdy = sin(pa) * PLAYERWANDLENGTH;
+	playerX = 300;
+       	playerY = 300;
+	playerAngle = PI * 0.5;
+	playerDeltaX = cos(playerAngle) *  PLAYERWANDLENGTH;
+	playerDeltaY = sin(playerAngle) * PLAYERWANDLENGTH;
 }
 
 void drawPlayer()
@@ -37,18 +38,18 @@ void drawPlayer()
 	glColor3f(1,1,0);
 	glPointSize(8);
 	glBegin(GL_POINTS);
-	glVertex2f(px,py);
+	glVertex2f(playerX,playerY);
 	glEnd();
 	
 	glColor3f(1,1,0);
 	glLineWidth(3);
 	glBegin(GL_LINES);
-	glVertex2f(px,py);
-	glVertex2f(px+pdx,py-pdy);
+	glVertex2f(playerX,playerY);
+	glVertex2f(playerX+playerDeltaX,playerY-playerDeltaY);
 	glEnd();
 }
 
-int mapLength=8, mapHeight=8, mapBlockSize=64;
+int mapColumns=8, mapRows=8, mapBlockSize=64;
 
 int map[]=
 {
@@ -64,51 +65,67 @@ int map[]=
 
 int pointIsInWall(float x, float y)
 {
-	int mapBlockIndex = (mapLength*(((int)y)/mapBlockSize)) + (((int)x)/mapBlockSize);
+	int mapBlockIndex = (mapColumns*(((int)y)/mapBlockSize)) + (((int)x)/mapBlockSize);
 	return (map[mapBlockIndex]==1);
 }
 
 void drawMap2D()
 {
-	for (int x=0; x<mapLength; x++)
-		for (int y=0; y<mapHeight; y++)
+	for (int j=0; j<mapColumns; j++)
+		for (int i=0; i<mapRows; i++)
 		{
-			if (map[ (mapLength*y) + x]==1)
+			if (map[ (mapColumns*i) + j]==1)
 			       	glColor3f(1,1,1);
 			else
 				glColor3f(0,0,0);
 
 			glBegin(GL_QUADS);
-			glVertex2i(mapBlockSize*x,                  mapBlockSize*y);
-			glVertex2i(mapBlockSize*x,                  mapBlockSize*(y+1)-blockPadding);
-			glVertex2i(mapBlockSize*(x+1)-blockPadding, mapBlockSize*(y+1)-blockPadding);
-			glVertex2i(mapBlockSize*(x+1)-blockPadding, mapBlockSize*(y));
+			glVertex2i(mapBlockSize*j,                  mapBlockSize*i);
+			glVertex2i(mapBlockSize*j,                  mapBlockSize*(i+1)-blockPadding);
+			glVertex2i(mapBlockSize*(j+1)-blockPadding, mapBlockSize*(i+1)-blockPadding);
+			glVertex2i(mapBlockSize*(j+1)-blockPadding, mapBlockSize*i);
 			glEnd();
 		}
 }
 
 void drawRays()
 {
-	struct point* rayEndPointsAddress = rayEndPoints;	
-	for (float rayAngle=pa-(PI*0.25); rayAngle<pa+(PI*0.25); rayAngle+=0.03)
+	struct RayEndPoint* rayEndPointArrayAddress = rayEndPointArray;	
+	for (float rayAngle=playerAngle-(PI*0.25); rayAngle<playerAngle+(PI*0.25); rayAngle+=0.03)
 	{
+		struct RayEndPoint rayEndPoint = { playerX, playerY, rayAngle };
+		float i = 1;
+		while(!pointIsInWall(rayEndPoint.rayX, rayEndPoint.rayY))
+		{
+			rayEndPoint.rayX = playerX + cos(rayAngle)*PLAYERWANDLENGTH*i;
+			rayEndPoint.rayY = playerY - sin(rayAngle)*PLAYERWANDLENGTH*i;
+			i += 1.0;
+		}
+		*rayEndPointArrayAddress++ = rayEndPoint;	// Append point to array
+		
 		glColor3f(0,1,0);
 		glLineWidth(1);
 		glBegin(GL_LINES);
-		glVertex2f(px, py);
-		
-		struct point rayEndPoint = { px, py };
-
-		float i = 1;
-		while(!pointIsInWall(rayEndPoint.x, rayEndPoint.y))
-		{
-			rayEndPoint.x = px + cos(rayAngle)*PLAYERWANDLENGTH*i;
-			rayEndPoint.y = py - sin(rayAngle)*PLAYERWANDLENGTH*i;
-			i += 2; //1.0e-5;
-		}
-		*rayEndPointsAddress++ = rayEndPoint;	// Append point to array
-		glVertex2f(rayEndPoint.x, rayEndPoint.y);
+		glVertex2f(playerX, playerY);
+		glVertex2f(rayEndPoint.rayX, rayEndPoint.rayY);
 		glEnd();
+	}
+}
+
+void drawColumns()
+{
+	for (int i=52; i!=0; i--)
+	{
+		float columnHeight = fabs( cos(rayEndPointArray[i].rayAngle) / (rayEndPointArray[i].rayX - playerX) ) * 2.5e4;
+
+		glColor3f(0,1,0);
+		glLineWidth(9);
+		glBegin(GL_LINES);
+		glVertex2f(512+i*9, 256-columnHeight/2);
+		glVertex2f(512+i*9, 256+columnHeight/2);
+		glEnd();
+		
+		printf("rayEndPointArray[%d]: %f, %f, %f, %f\n", i, rayEndPointArray[i].rayX, rayEndPointArray[i].rayY, rayEndPointArray[i].rayAngle, columnHeight);
 	}
 }
 
@@ -118,44 +135,45 @@ void display()
 	drawMap2D();
 	drawPlayer();
 	drawRays();
+	drawColumns();
 	glutSwapBuffers();
 }
 
 void modifyPositionOfPlayer(unsigned char key)
 {
-	float new_px = px;
-       	float new_py = py;
+	float newPlayerX = playerX;
+       	float newPlayerY = playerY;
 	float angularUnitOfChange = 0.15;
 	
 	if (key == 'a')
-		pa += angularUnitOfChange;	
+		playerAngle += angularUnitOfChange;	
 	if (key == 'd')
-		pa -= angularUnitOfChange;
+		playerAngle -= angularUnitOfChange;
 	
 	if (key == 'w')
 	{
-		new_px += displacementFactor * pdx;
-		new_py -= displacementFactor * pdy;
+		newPlayerX += displacementFactor * playerDeltaX;
+		newPlayerY -= displacementFactor * playerDeltaY;
 	}
 	if (key == 's')
 	{
-		new_px -= displacementFactor * pdx;
-		new_py += displacementFactor * pdy;
+		newPlayerX -= displacementFactor * playerDeltaX;
+		newPlayerY += displacementFactor * playerDeltaY;
 	}
 
-	if (pointIsInWall(new_px, new_py))
+	if (pointIsInWall(newPlayerX, newPlayerY))
 	{
-		new_px = px;
-		new_py = py;
+		newPlayerX = playerX;
+		newPlayerY = playerY;
 	}
 	else
 	{
-		px = new_px;
-		py = new_py;
+		playerX = newPlayerX;
+		playerY = newPlayerY;
 	}
 		
-	pdx = cos(pa) * PLAYERWANDLENGTH;
-	pdy = sin(pa) * PLAYERWANDLENGTH;	
+	playerDeltaX = cos(playerAngle) * PLAYERWANDLENGTH;
+	playerDeltaY = sin(playerAngle) * PLAYERWANDLENGTH;	
 
 }
 void buttons(unsigned char key, int x, int y)
