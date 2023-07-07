@@ -38,20 +38,29 @@ void init()
 	player.playerUnitVectorY = sin(player.playerAngle) * PLAYERWANDLENGTH;
 }
 
-void drawPlayer()
+void drawPlayerBody2D(struct Player __player)
 {
 	glColor3f(1,1,0);
 	glPointSize(8);
 	glBegin(GL_POINTS);
-	glVertex2f(player.playerX,player.playerY);
+	glVertex2f(__player.playerX,__player.playerY);
 	glEnd();
-	
+}
+
+void drawPlayerWand(struct Player _player)
+{
 	glColor3f(1,1,0);
 	glLineWidth(3);
 	glBegin(GL_LINES);
 	glVertex2f(player.playerX,player.playerY);
 	glVertex2f(player.playerX+player.playerUnitVectorX,player.playerY-player.playerUnitVectorY);
 	glEnd();
+}
+
+void drawPlayer2D(struct Player _player)
+{
+	drawPlayerBody2D(_player);
+	drawPlayerWand(_player);
 }
 
 int mapColumns=8, mapRows=8, mapBlockSize=64;
@@ -123,14 +132,14 @@ void drawSingleRay(float _playerX, float _playerY, struct RayEndPoint _rayEndPoi
 	glEnd();
 }
 
-void drawRays()
+void drawRays(struct Player _player)
 {
 	struct RayEndPoint* rayEndPointArrayAddress = rayEndPointArray;	
-	for (float rayAngle=player.playerAngle-(PI*0.25); rayAngle<player.playerAngle+(PI*0.25); rayAngle+=0.03)
+	for (float rayAngle=_player.playerAngle-(PI*0.25); rayAngle<_player.playerAngle+(PI*0.25); rayAngle+=0.03)
 	{
-		struct RayEndPoint rayEndPoint = findRayEndPoint(player.playerX, player.playerY, rayAngle);
+		struct RayEndPoint rayEndPoint = findRayEndPoint(_player.playerX, _player.playerY, rayAngle);
 		*rayEndPointArrayAddress++ = rayEndPoint;	// Append point to array
-		drawSingleRay(player.playerX, player.playerY, rayEndPoint);	
+		drawSingleRay(_player.playerX, _player.playerY, rayEndPoint);	
 	}
 }
 
@@ -144,11 +153,11 @@ void drawSingleColumn(float _columnHeight, int position)
 		glEnd();
 }
 
-void drawColumns()
+void drawColumns(struct Player _player)
 {
 	for (int i=0; i<(RAYCOUNT-1); i++)
 	{
-		float columnHeight = fabs( cos(rayEndPointArray[i].rayAngle) / (rayEndPointArray[i].rayX - player.playerX) ) * 2.5e4;
+		float columnHeight = fabs( cos(rayEndPointArray[i].rayAngle) / (rayEndPointArray[i].rayX - _player.playerX) ) * 2.5e4;
 		drawSingleColumn(columnHeight, i);
 	}
 }
@@ -157,9 +166,9 @@ void display()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	drawMap2D();
-	drawPlayer();
-	drawRays();
-	drawColumns();
+	drawPlayer2D(player);
+	drawRays(player);
+	drawColumns(player);
 	glutSwapBuffers();
 }
 
