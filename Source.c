@@ -5,7 +5,18 @@
 #define WIDTH 1024 
 #define HEIGHT 512
 #define PLAYERWANDLENGTH 18.0
-#define RAYADDENDUM 1.5
+#define RAYCOUNT 53
+
+struct Player
+{
+	float playerX;
+	float playerY;
+	float playerAngle;
+	float playerUnitVectorX;
+	float playerUnitVectorY;
+};
+
+struct Player player;
 
 struct RayEndPoint
 {
@@ -14,23 +25,17 @@ struct RayEndPoint
 	float rayAngle;
 };
 
-float playerX, playerY; // player position
-float playerDeltaX, playerDeltaY, playerAngle; // player change in position and angle
-float blockPadding=2;
-float displacementFactor = 0.5;
-float angularUnitOfChange = 0.15;
-struct RayEndPoint rayEndPointArray[53];
-
+struct RayEndPoint rayEndPointArray[RAYCOUNT];
 
 void init()
 {
 	glClearColor(0.3,0.3,0.3,0);
 	gluOrtho2D(0,WIDTH,HEIGHT,0);
-	playerX = 300;
-       	playerY = 300;
-	playerAngle = PI * 0.5;
-	playerDeltaX = cos(playerAngle) *  PLAYERWANDLENGTH;
-	playerDeltaY = sin(playerAngle) * PLAYERWANDLENGTH;
+	player.playerX = 300;
+       	player.playerY = 300;
+	player.playerAngle = PI * 0.5;
+	player.playerUnitVectorX = cos(player.playerAngle) *  PLAYERWANDLENGTH;
+	player.playerUnitVectorY = sin(player.playerAngle) * PLAYERWANDLENGTH;
 }
 
 void drawPlayer()
@@ -38,14 +43,14 @@ void drawPlayer()
 	glColor3f(1,1,0);
 	glPointSize(8);
 	glBegin(GL_POINTS);
-	glVertex2f(playerX,playerY);
+	glVertex2f(player.playerX,player.playerY);
 	glEnd();
 	
 	glColor3f(1,1,0);
 	glLineWidth(3);
 	glBegin(GL_LINES);
-	glVertex2f(playerX,playerY);
-	glVertex2f(playerX+playerDeltaX,playerY-playerDeltaY);
+	glVertex2f(player.playerX,player.playerY);
+	glVertex2f(player.playerX+player.playerUnitVectorX,player.playerY-player.playerUnitVectorY);
 	glEnd();
 }
 
@@ -63,67 +68,88 @@ int map[]=
 	1,1,1,1,1,1,1,1,
 };
 
+
+void drawSingleBlock(int blockColumn, int blockRow, int blockPadding)
+{
+	glBegin(GL_QUADS);
+	glVertex2i(mapBlockSize*blockColumn,                  mapBlockSize*blockRow);
+	glVertex2i(mapBlockSize*blockColumn,                  mapBlockSize*(blockRow+1)-blockPadding);
+	glVertex2i(mapBlockSize*(blockColumn+1)-blockPadding, mapBlockSize*(blockRow+1)-blockPadding);
+	glVertex2i(mapBlockSize*(blockColumn+1)-blockPadding, mapBlockSize*blockRow);
+	glEnd();
+}
+
+void drawMap2D()
+{
+	for (int currentColumn=0; currentColumn<mapColumns; currentColumn++)
+		for (int currentRow=0; currentRow<mapRows; currentRow++)
+		{
+			if (map[ (mapColumns*currentRow) + currentColumn]==1)
+			       	glColor3f(1,1,1);
+			else
+				glColor3f(0,0,0);
+
+			drawSingleBlock(currentColumn, currentRow, 2);
+		}
+}
+
 int pointIsInWall(float x, float y)
 {
 	int mapBlockIndex = (mapColumns*(((int)y)/mapBlockSize)) + (((int)x)/mapBlockSize);
 	return (map[mapBlockIndex]==1);
 }
 
-void drawMap2D()
+struct RayEndPoint findRayEndPoint( float _playerX, float _playerY, float _rayAngle)
 {
-	for (int j=0; j<mapColumns; j++)
-		for (int i=0; i<mapRows; i++)
-		{
-			if (map[ (mapColumns*i) + j]==1)
-			       	glColor3f(1,1,1);
-			else
-				glColor3f(0,0,0);
+	struct RayEndPoint rayEndPoint = { _playerX, _playerY, _rayAngle };
+	float i = 1;
+	while(!pointIsInWall(rayEndPoint.rayX, rayEndPoint.rayY))
+	{
+		rayEndPoint.rayX = player.playerX + cos(rayEndPoint.rayAngle)*PLAYERWANDLENGTH*i;
+		rayEndPoint.rayY = player.playerY - sin(rayEndPoint.rayAngle)*PLAYERWANDLENGTH*i;
+		i += 1.0e-3;
+	}
 
-			glBegin(GL_QUADS);
-			glVertex2i(mapBlockSize*j,                  mapBlockSize*i);
-			glVertex2i(mapBlockSize*j,                  mapBlockSize*(i+1)-blockPadding);
-			glVertex2i(mapBlockSize*(j+1)-blockPadding, mapBlockSize*(i+1)-blockPadding);
-			glVertex2i(mapBlockSize*(j+1)-blockPadding, mapBlockSize*i);
-			glEnd();
-		}
+	return rayEndPoint;
+}	
+
+void drawSingleRay(float _playerX, float _playerY, struct RayEndPoint _rayEndPoint)
+{
+	glColor3f(0,1,0);
+	glLineWidth(1);
+	glBegin(GL_LINES);
+	glVertex2f(_playerX, _playerY);
+	glVertex2f(_rayEndPoint.rayX, _rayEndPoint.rayY);
+	glEnd();
 }
 
 void drawRays()
 {
 	struct RayEndPoint* rayEndPointArrayAddress = rayEndPointArray;	
-	for (float rayAngle=playerAngle-(PI*0.25); rayAngle<playerAngle+(PI*0.25); rayAngle+=0.03)
+	for (float rayAngle=player.playerAngle-(PI*0.25); rayAngle<player.playerAngle+(PI*0.25); rayAngle+=0.03)
 	{
-		struct RayEndPoint rayEndPoint = { playerX, playerY, rayAngle };
-		float i = 1;
-		while(!pointIsInWall(rayEndPoint.rayX, rayEndPoint.rayY))
-		{
-			rayEndPoint.rayX = playerX + cos(rayAngle)*PLAYERWANDLENGTH*i;
-			rayEndPoint.rayY = playerY - sin(rayAngle)*PLAYERWANDLENGTH*i;
-			i += 1.0e-3;
-		}
+		struct RayEndPoint rayEndPoint = findRayEndPoint(player.playerX, player.playerY, rayAngle);
 		*rayEndPointArrayAddress++ = rayEndPoint;	// Append point to array
-		
-		glColor3f(0,1,0);
-		glLineWidth(1);
-		glBegin(GL_LINES);
-		glVertex2f(playerX, playerY);
-		glVertex2f(rayEndPoint.rayX, rayEndPoint.rayY);
-		glEnd();
+		drawSingleRay(player.playerX, player.playerY, rayEndPoint);	
 	}
+}
+
+void drawSingleColumn(float _columnHeight, int position)
+{
+		glColor3f(0,1,0);
+		glLineWidth(9);
+		glBegin(GL_LINES);
+		glVertex2f((WIDTH/2.0)+((RAYCOUNT-1)-position)*9, (HEIGHT/4.0)-_columnHeight/2);
+		glVertex2f((WIDTH/2.0)+((RAYCOUNT-1)-position)*9, (HEIGHT/4.0)+_columnHeight/2);
+		glEnd();
 }
 
 void drawColumns()
 {
-	for (int i=0; i<52; i++)
+	for (int i=0; i<(RAYCOUNT-1); i++)
 	{
-		float columnHeight = fabs( cos(rayEndPointArray[i].rayAngle) / (rayEndPointArray[i].rayX - playerX) ) * 2.5e4;
-
-		glColor3f(0,1,0);
-		glLineWidth(9);
-		glBegin(GL_LINES);
-		glVertex2f(512+(52-i)*9, 256-columnHeight/2);
-		glVertex2f(512+(52-i)*9, 256+columnHeight/2);
-		glEnd();
+		float columnHeight = fabs( cos(rayEndPointArray[i].rayAngle) / (rayEndPointArray[i].rayX - player.playerX) ) * 2.5e4;
+		drawSingleColumn(columnHeight, i);
 	}
 }
 
@@ -137,46 +163,61 @@ void display()
 	glutSwapBuffers();
 }
 
-void modifyPositionOfPlayer(unsigned char key)
+
+
+
+struct Player modifyPlayerOrientation(unsigned char key, struct Player __player)
 {
-	float newPlayerX = playerX;
-       	float newPlayerY = playerY;
-	float angularUnitOfChange = 0.15;
-	
+	float angleUnitOfChange = 0.15;
 	if (key == 'a')
-		playerAngle += angularUnitOfChange;	
+		__player.playerAngle +=  angleUnitOfChange;	
 	if (key == 'd')
-		playerAngle -= angularUnitOfChange;
-	
+		__player.playerAngle -= angleUnitOfChange;
+
+	__player.playerUnitVectorX = cos(__player.playerAngle) * PLAYERWANDLENGTH;
+	__player.playerUnitVectorY = sin(__player.playerAngle) * PLAYERWANDLENGTH;	
+
+	return __player;
+}
+
+struct Player modifyPlayerPosition(unsigned char key, struct Player __player)
+{
+	float _displacementFactor = 0.5;
 	if (key == 'w')
 	{
-		newPlayerX += displacementFactor * playerDeltaX;
-		newPlayerY -= displacementFactor * playerDeltaY;
+		__player.playerX += _displacementFactor * __player.playerUnitVectorX;
+		__player.playerY -= _displacementFactor * __player.playerUnitVectorY;
 	}
 	if (key == 's')
 	{
-		newPlayerX -= displacementFactor * playerDeltaX;
-		newPlayerY += displacementFactor * playerDeltaY;
+		__player.playerX -= _displacementFactor * __player.playerUnitVectorX;
+		__player.playerY += _displacementFactor * __player.playerUnitVectorY;
 	}
 
-	if (pointIsInWall(newPlayerX, newPlayerY))
+	return __player;
+}
+
+struct Player modifyPlayerOrOrientation(unsigned char key, struct Player _player)
+{
+	
+	_player = modifyPlayerOrientation(key, _player);
+	struct Player modifiedPlayer = modifyPlayerPosition(key, _player);
+
+	if (pointIsInWall(modifiedPlayer.playerX, modifiedPlayer.playerY))
 	{
-		newPlayerX = playerX;
-		newPlayerY = playerY;
+		modifiedPlayer = _player;
 	}
 	else
 	{
-		playerX = newPlayerX;
-		playerY = newPlayerY;
+		_player = modifiedPlayer;
 	}
 		
-	playerDeltaX = cos(playerAngle) * PLAYERWANDLENGTH;
-	playerDeltaY = sin(playerAngle) * PLAYERWANDLENGTH;	
-
+	return _player;
 }
+
 void buttons(unsigned char key, int x, int y)
 {
-	modifyPositionOfPlayer(key);	
+	player = modifyPlayerOrOrientation(key, player);
 	glutPostRedisplay();
 }
 
