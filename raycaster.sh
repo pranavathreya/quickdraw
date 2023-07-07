@@ -1,1 +1,1 @@
-gcc Source.c -o Source.o -lglut -lGL -lGLU -lm; ./Source.o
+./compile.sh; ./Source.o
