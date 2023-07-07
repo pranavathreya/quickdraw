@@ -47,7 +47,7 @@ void drawPlayerBody2D(struct Player __player)
 	glEnd();
 }
 
-void drawPlayerWand(struct Player _player)
+void drawPlayerWand2D(struct Player _player)
 {
 	glColor3f(1,1,0);
 	glLineWidth(3);
@@ -60,7 +60,7 @@ void drawPlayerWand(struct Player _player)
 void drawPlayer2D(struct Player _player)
 {
 	drawPlayerBody2D(_player);
-	drawPlayerWand(_player);
+	drawPlayerWand2D(_player);
 }
 
 int mapColumns=8, mapRows=8, mapBlockSize=64;
@@ -78,7 +78,7 @@ int map[]=
 };
 
 
-void drawSingleBlock(int blockColumn, int blockRow, int blockPadding)
+void drawSingleBlock2D(int blockColumn, int blockRow, int blockPadding)
 {
 	glBegin(GL_QUADS);
 	glVertex2i(mapBlockSize*blockColumn,                  mapBlockSize*blockRow);
@@ -98,7 +98,7 @@ void drawMap2D()
 			else
 				glColor3f(0,0,0);
 
-			drawSingleBlock(currentColumn, currentRow, 2);
+			drawSingleBlock2D(currentColumn, currentRow, 2);
 		}
 }
 
@@ -206,7 +206,7 @@ struct Player modifyPlayerPosition(unsigned char key, struct Player __player)
 	return __player;
 }
 
-struct Player modifyPlayerOrOrientation(unsigned char key, struct Player _player)
+struct Player modifyPlayerPositionOrOrientation(unsigned char key, struct Player _player)
 {
 	
 	_player = modifyPlayerOrientation(key, _player);
@@ -226,7 +226,7 @@ struct Player modifyPlayerOrOrientation(unsigned char key, struct Player _player
 
 void buttons(unsigned char key, int x, int y)
 {
-	player = modifyPlayerOrOrientation(key, player);
+	player = modifyPlayerPositionOrOrientation(key, player);
 	glutPostRedisplay();
 }
 
