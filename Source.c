@@ -1,22 +1,23 @@
 #include <stdio.h>
 #include <GL/glut.h>
 #include <math.h>
+
 #define PI 3.1415926535
 #define WIDTH 1024 
 #define HEIGHT 512
-#define PLAYERWANDLENGTH 18.0
+#define PLAYER_WAND_LENGTH 18.0
 #define RAYCOUNT 53
 
-struct Player
+typedef struct Player
 {
 	float playerX;
 	float playerY;
 	float playerAngle;
 	float playerUnitVectorX;
 	float playerUnitVectorY;
-};
+} Player;
 
-struct Player player;
+Player player;
 
 struct RayEndPoint
 {
@@ -34,11 +35,11 @@ void init()
 	player.playerX = 300;
        	player.playerY = 300;
 	player.playerAngle = PI * 0.5;
-	player.playerUnitVectorX = cos(player.playerAngle) *  PLAYERWANDLENGTH;
-	player.playerUnitVectorY = sin(player.playerAngle) * PLAYERWANDLENGTH;
+	player.playerUnitVectorX = cos(player.playerAngle) *  PLAYER_WAND_LENGTH;
+	player.playerUnitVectorY = sin(player.playerAngle) * PLAYER_WAND_LENGTH;
 }
 
-void drawPlayerBody2D(struct Player __player)
+void drawPlayerBody2D(Player __player)
 {
 	glColor3f(1,1,0);
 	glPointSize(8);
@@ -47,7 +48,7 @@ void drawPlayerBody2D(struct Player __player)
 	glEnd();
 }
 
-void drawPlayerWand2D(struct Player _player)
+void drawPlayerWand2D(Player _player)
 {
 	glColor3f(1,1,0);
 	glLineWidth(3);
@@ -57,7 +58,7 @@ void drawPlayerWand2D(struct Player _player)
 	glEnd();
 }
 
-void drawPlayer2D(struct Player _player)
+void drawPlayer2D(Player _player)
 {
 	drawPlayerBody2D(_player);
 	drawPlayerWand2D(_player);
@@ -114,8 +115,8 @@ struct RayEndPoint findRayEndPoint( float _playerX, float _playerY, float _rayAn
 	float i = 1;
 	while(!pointIsInWall(rayEndPoint.rayX, rayEndPoint.rayY))
 	{
-		rayEndPoint.rayX = player.playerX + cos(rayEndPoint.rayAngle)*PLAYERWANDLENGTH*i;
-		rayEndPoint.rayY = player.playerY - sin(rayEndPoint.rayAngle)*PLAYERWANDLENGTH*i;
+		rayEndPoint.rayX = player.playerX + cos(rayEndPoint.rayAngle)*PLAYER_WAND_LENGTH*i;
+		rayEndPoint.rayY = player.playerY - sin(rayEndPoint.rayAngle)*PLAYER_WAND_LENGTH*i;
 		i += 1.0e-3;
 	}
 
@@ -132,7 +133,7 @@ void drawSingleRay(float _playerX, float _playerY, struct RayEndPoint _rayEndPoi
 	glEnd();
 }
 
-void drawRays(struct Player _player)
+void drawRays(Player _player)
 {
 	struct RayEndPoint* rayEndPointArrayAddress = rayEndPointArray;	
 	for (float rayAngle=_player.playerAngle-(PI*0.25); rayAngle<_player.playerAngle+(PI*0.25); rayAngle+=0.03)
@@ -153,7 +154,7 @@ void drawSingleColumn(float _columnHeight, int position)
 		glEnd();
 }
 
-void drawColumns(struct Player _player)
+void drawColumns(Player _player)
 {
 	for (int i=0; i<(RAYCOUNT-1); i++)
 	{
@@ -175,21 +176,57 @@ void display()
 
 
 
-struct Player modifyPlayerOrientation(unsigned char key, struct Player __player)
+Player modifyPlayerOrientation(unsigned char key, Player __player)
 {
 	float angleUnitOfChange = 0.15;
 	if (key == 'a')
-		__player.playerAngle +=  angleUnitOfChange;	
+		__player.playerAngle += angleUnitOfChange;	
 	if (key == 'd')
 		__player.playerAngle -= angleUnitOfChange;
 
-	__player.playerUnitVectorX = cos(__player.playerAngle) * PLAYERWANDLENGTH;
-	__player.playerUnitVectorY = sin(__player.playerAngle) * PLAYERWANDLENGTH;	
+	__player.playerUnitVectorX = cos(__player.playerAngle) * PLAYER_WAND_LENGTH;
+	__player.playerUnitVectorY = sin(__player.playerAngle) * PLAYER_WAND_LENGTH;	
 
 	return __player;
 }
 
-struct Player modifyPlayerPosition(unsigned char key, struct Player __player)
+int clamp(int value, int min, int max) {
+	return (value < min) ? min : ((value > max) ? max : value);
+	
+	if (value < min) {
+		return min;
+	} else if (value > max) {
+		return max;
+	} else {
+		return value;
+	}
+}
+
+float vecAbs(float x, float y) {
+	return sqrtf((x * x) + (y * y));
+}
+
+
+Player modifyPlayerMouseOrientation(int mouseRelX, int mouseRelY, Player __player) 
+{
+	float vecX = (float) (mouseRelX - __player.playerX);
+	float vecY = (float) -(mouseRelY - __player.playerY);
+
+	float magnitude = vecAbs(vecX, vecY);
+
+	float unitX = vecX / magnitude;
+	float unitY = vecY / magnitude;
+
+	float angle = atan2f(unitY, unitX);
+
+	__player.playerUnitVectorX = unitX * PLAYER_WAND_LENGTH;
+	__player.playerUnitVectorY = unitY * PLAYER_WAND_LENGTH;
+	__player.playerAngle = angle;
+
+	return __player;
+}
+
+Player modifyPlayerPosition(unsigned char key, Player __player)
 {
 	float _displacementFactor = 0.5;
 	if (key == 'w')
@@ -206,11 +243,11 @@ struct Player modifyPlayerPosition(unsigned char key, struct Player __player)
 	return __player;
 }
 
-struct Player modifyPlayerPositionOrOrientation(unsigned char key, struct Player _player)
+Player modifyPlayerPositionOrOrientation(unsigned char key, Player _player)
 {
 	
 	_player = modifyPlayerOrientation(key, _player);
-	struct Player modifiedPlayer = modifyPlayerPosition(key, _player);
+	Player modifiedPlayer = modifyPlayerPosition(key, _player);
 
 	if (pointIsInWall(modifiedPlayer.playerX, modifiedPlayer.playerY))
 	{
@@ -230,6 +267,12 @@ void buttons(unsigned char key, int x, int y)
 	glutPostRedisplay();
 }
 
+void mouse(int x, int y) {
+	player = modifyPlayerMouseOrientation(x, y, player);
+	glutPostRedisplay();
+}
+
+
 int main(argc, argv)
 int argc;
 char *argv[];
@@ -241,5 +284,7 @@ char *argv[];
 	init();
 	glutDisplayFunc(display);
 	glutKeyboardFunc(buttons);
+	glutPassiveMotionFunc(mouse);
+	glutMotionFunc(mouse);
 	glutMainLoop();
 }
