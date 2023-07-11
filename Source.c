@@ -13,8 +13,10 @@ typedef struct Player
 	float playerX;
 	float playerY;
 	float playerAngle;
-	float playerUnitVectorX;
-	float playerUnitVectorY;
+	float playerWandVectorX;
+	float playerWandVectorY;
+	float mouseRelativeX;
+	float mouseRelativeY;
 } Player;
 
 Player player;
@@ -35,8 +37,10 @@ void init()
 	player.playerX = 300;
        	player.playerY = 300;
 	player.playerAngle = PI * 0.5;
-	player.playerUnitVectorX = cos(player.playerAngle) *  PLAYER_WAND_LENGTH;
-	player.playerUnitVectorY = sin(player.playerAngle) * PLAYER_WAND_LENGTH;
+	player.playerWandVectorX = cos(player.playerAngle) *  PLAYER_WAND_LENGTH;
+	player.playerWandVectorY = sin(player.playerAngle) * PLAYER_WAND_LENGTH;
+	player.mouseRelativeX = 0;
+	player.mouseRelativeY = 0;
 }
 
 void drawPlayerBody2D(Player __player)
@@ -54,7 +58,7 @@ void drawPlayerWand2D(Player _player)
 	glLineWidth(3);
 	glBegin(GL_LINES);
 	glVertex2f(player.playerX,player.playerY);
-	glVertex2f(player.playerX+player.playerUnitVectorX,player.playerY-player.playerUnitVectorY);
+	glVertex2f(player.playerX+player.playerWandVectorX,player.playerY-player.playerWandVectorY);
 	glEnd();
 }
 
@@ -176,7 +180,7 @@ void display()
 
 
 
-Player modifyPlayerOrientation(unsigned char key, Player __player)
+Player keyboardModifyPlayerOrientation(unsigned char key, Player __player)
 {
 	float angleUnitOfChange = 0.15;
 	if (key == 'a')
@@ -184,8 +188,8 @@ Player modifyPlayerOrientation(unsigned char key, Player __player)
 	if (key == 'd')
 		__player.playerAngle -= angleUnitOfChange;
 
-	__player.playerUnitVectorX = cos(__player.playerAngle) * PLAYER_WAND_LENGTH;
-	__player.playerUnitVectorY = sin(__player.playerAngle) * PLAYER_WAND_LENGTH;	
+	__player.playerWandVectorX = cos(__player.playerAngle) * PLAYER_WAND_LENGTH;
+	__player.playerWandVectorY = sin(__player.playerAngle) * PLAYER_WAND_LENGTH;	
 
 	return __player;
 }
@@ -202,52 +206,28 @@ int clamp(int value, int min, int max) {
 	}
 }
 
-float vecAbs(float x, float y) {
-	return sqrtf((x * x) + (y * y));
-}
-
-
-Player modifyPlayerMouseOrientation(int mouseRelX, int mouseRelY, Player __player) 
-{
-	float vecX = (float) (mouseRelX - __player.playerX);
-	float vecY = (float) -(mouseRelY - __player.playerY);
-
-	float magnitude = vecAbs(vecX, vecY);
-
-	float unitX = vecX / magnitude;
-	float unitY = vecY / magnitude;
-
-	float angle = atan2f(unitY, unitX);
-
-	__player.playerUnitVectorX = unitX * PLAYER_WAND_LENGTH;
-	__player.playerUnitVectorY = unitY * PLAYER_WAND_LENGTH;
-	__player.playerAngle = angle;
-
-	return __player;
-}
-
-Player modifyPlayerPosition(unsigned char key, Player __player)
+Player keyboardModifyPlayerPosition(unsigned char key, Player __player)
 {
 	float _displacementFactor = 0.5;
 	if (key == 'w')
 	{
-		__player.playerX += _displacementFactor * __player.playerUnitVectorX;
-		__player.playerY -= _displacementFactor * __player.playerUnitVectorY;
+		__player.playerX += _displacementFactor * __player.playerWandVectorX;
+		__player.playerY -= _displacementFactor * __player.playerWandVectorY;
 	}
 	if (key == 's')
 	{
-		__player.playerX -= _displacementFactor * __player.playerUnitVectorX;
-		__player.playerY += _displacementFactor * __player.playerUnitVectorY;
+		__player.playerX -= _displacementFactor * __player.playerWandVectorX;
+		__player.playerY += _displacementFactor * __player.playerWandVectorY;
 	}
 
 	return __player;
 }
 
-Player modifyPlayerPositionOrOrientation(unsigned char key, Player _player)
+Player keyboardMovementManager(unsigned char key, Player _player)
 {
 	
-	_player = modifyPlayerOrientation(key, _player);
-	Player modifiedPlayer = modifyPlayerPosition(key, _player);
+	_player = keyboardModifyPlayerOrientation(key, _player);
+	Player modifiedPlayer = keyboardModifyPlayerPosition(key, _player);
 
 	if (pointIsInWall(modifiedPlayer.playerX, modifiedPlayer.playerY))
 	{
@@ -263,12 +243,35 @@ Player modifyPlayerPositionOrOrientation(unsigned char key, Player _player)
 
 void buttons(unsigned char key, int x, int y)
 {
-	player = modifyPlayerPositionOrOrientation(key, player);
+	player = keyboardMovementManager(key, player);
 	glutPostRedisplay();
 }
 
+float vectorMagnitude(float x, float y) {
+	return sqrtf((x * x) + (y * y));
+}
+
+Player mouseModifyPlayerOrientation(int mouseRelativeX, int mouseRelativeY, Player __player) 
+{
+       float vecX = (float) (mouseRelativeX - __player.playerX);
+       float vecY = (float) -(mouseRelativeY - __player.playerY);
+
+       float magnitude = vectorMagnitude(vecX, vecY);
+
+       float unitX = vecX / magnitude;
+       float unitY = vecY / magnitude;
+
+       float angle = atan2f(unitY, unitX);
+
+       __player.playerWandVectorX = unitX * PLAYER_WAND_LENGTH;
+       __player.playerWandVectorY = unitY * PLAYER_WAND_LENGTH;
+       __player.playerAngle = angle;
+
+       return __player;
+}
+
 void mouse(int x, int y) {
-	player = modifyPlayerMouseOrientation(x, y, player);
+	player = mouseModifyPlayerOrientation(x, y, player);
 	glutPostRedisplay();
 }
 
