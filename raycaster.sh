@@ -1,1 +1,1 @@
-./compile.sh; ./Source.o
+./compile.sh; ./main.o

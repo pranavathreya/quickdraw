@@ -1,1 +1,3 @@
-gcc Source.c -o Source.o -lglut -lGL -lGLU -lm
+
+gcc main.c -o main.o -lglut -lGL -lGLU -lm
+
