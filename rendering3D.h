@@ -8,7 +8,7 @@ struct RayEndPoint
 	float rayAngle;
 };
 
-struct RayEndPoint rayEndPointArray[RAYCOUNT];
+struct RayEndPoint rayEndPointArray[RAY_COUNT];
 
 void drawPlayerBody2D(Player __player)
 {
@@ -35,7 +35,7 @@ void drawPlayer2D(Player _player)
 	drawPlayerWand2D(_player);
 }
 
-int mapColumns=8, mapRows=8, mapBlockSize=64;
+int mapColumns=8, mapRows=8, mapBlockSideLength=64;
 
 int map[]=
 {
@@ -50,13 +50,13 @@ int map[]=
 };
 
 
-void drawSingleBlock2D(int blockColumn, int blockRow, int blockPadding)
+void drawSingleBlock2D(int currentMapColumn, int currentMapRow, int blockPadding)
 {
 	glBegin(GL_QUADS);
-	glVertex2i(mapBlockSize*blockColumn,                  mapBlockSize*blockRow);
-	glVertex2i(mapBlockSize*blockColumn,                  mapBlockSize*(blockRow+1)-blockPadding);
-	glVertex2i(mapBlockSize*(blockColumn+1)-blockPadding, mapBlockSize*(blockRow+1)-blockPadding);
-	glVertex2i(mapBlockSize*(blockColumn+1)-blockPadding, mapBlockSize*blockRow);
+	glVertex2i(mapBlockSideLength*currentMapColumn,                  mapBlockSideLength*currentMapRow);
+	glVertex2i(mapBlockSideLength*currentMapColumn,                  mapBlockSideLength*(currentMapRow+1)-blockPadding);
+	glVertex2i(mapBlockSideLength*(currentMapColumn+1)-blockPadding, mapBlockSideLength*(currentMapRow+1)-blockPadding);
+	glVertex2i(mapBlockSideLength*(currentMapColumn+1)-blockPadding, mapBlockSideLength*currentMapRow);
 	glEnd();
 }
 
@@ -76,20 +76,21 @@ void drawMap2D()
 
 int pointIsInWall(float x, float y)
 {
-	int mapBlockIndex = (mapColumns*(((int)y)/mapBlockSize)) + (((int)x)/mapBlockSize);
+	int mapBlockIndex = (mapColumns*(((int)y)/mapBlockSideLength)) + (((int)x)/mapBlockSideLength);
 	return (map[mapBlockIndex]==1);
 }
 
 struct RayEndPoint findRayEndPoint( float _playerX, float _playerY, float _rayAngle)
 {
 	struct RayEndPoint rayEndPoint = { _playerX, _playerY, _rayAngle };
-	float i = 1;
-	while(!pointIsInWall(rayEndPoint.rayX, rayEndPoint.rayY))
+
+	for(int i=0; !pointIsInWall(rayEndPoint.rayX, rayEndPoint.rayY); ++i)
 	{
-		rayEndPoint.rayX = _playerX + cos(rayEndPoint.rayAngle)*PLAYER_WAND_LENGTH*i;
-		rayEndPoint.rayY = _playerY - sin(rayEndPoint.rayAngle)*PLAYER_WAND_LENGTH*i;
-		i += 1.0e-3;
+		rayEndPoint.rayX = (float) ((( (int)_playerX) / mapBlockSideLength ) + i ) * mapBlockSideLength;
+		printf("rayX = %f; tan = %f\n", rayEndPoint.rayX, tan(rayEndPoint.rayAngle));
+		rayEndPoint.rayY = tan(rayEndPoint.rayAngle) * rayEndPoint.rayX ;
 	}
+
 
 	return rayEndPoint;
 }	
@@ -107,7 +108,10 @@ void drawSingleRay(float _playerX, float _playerY, struct RayEndPoint _rayEndPoi
 void drawRays(Player _player)
 {
 	struct RayEndPoint* rayEndPointArrayAddress = rayEndPointArray;	
-	for (float rayAngle=_player.playerAngle-(PI*0.25); rayAngle<_player.playerAngle+(PI*0.25); rayAngle+=0.03)
+
+	float rayAngle = _player.playerAngle-(PI*0.25);
+	
+	for (int i=0; i<RAY_COUNT; ++i, rayAngle+=0.02)
 	{
 		struct RayEndPoint rayEndPoint = findRayEndPoint(_player.playerX, _player.playerY, rayAngle);
 		*rayEndPointArrayAddress++ = rayEndPoint;	// Append point to array
@@ -120,14 +124,14 @@ void drawSingleColumn(float _columnHeight, int position)
 		glColor3f(0,1,0);
 		glLineWidth(9);
 		glBegin(GL_LINES);
-		glVertex2f((WIDTH/2.0)+((RAYCOUNT-1)-position)*9, (HEIGHT/4.0)-_columnHeight/2);
-		glVertex2f((WIDTH/2.0)+((RAYCOUNT-1)-position)*9, (HEIGHT/4.0)+_columnHeight/2);
+		glVertex2f((WIDTH/2.0)+((RAY_COUNT-1)-position)*9, (HEIGHT/4.0)-_columnHeight/2);
+		glVertex2f((WIDTH/2.0)+((RAY_COUNT-1)-position)*9, (HEIGHT/4.0)+_columnHeight/2);
 		glEnd();
 }
 
 void drawColumns(Player _player)
 {
-	for (int i=0; i<(RAYCOUNT-1); i++)
+	for (int i=0; i<(RAY_COUNT-1); i++)
 	{
 		float columnHeight = fabs( cos(rayEndPointArray[i].rayAngle) / (rayEndPointArray[i].rayX - _player.playerX) ) * 2.5e4;
 		drawSingleColumn(columnHeight, i);

@@ -2,7 +2,7 @@
 #define WIDTH 1024 
 #define HEIGHT 512
 #define PLAYER_WAND_LENGTH 18.0
-#define RAYCOUNT 53
+#define RAY_COUNT 93
 
 typedef struct Player
 {
