@@ -1,91 +1,100 @@
-#include <GL/glut.h> 
+#pragma once
 
-Player keyboardModifyPlayerOrientation(unsigned char key, Player __player)
+#include <iostream>
+
+#include "variables.h"
+
+float calculateNewOrientation(InputState istate, float oldAngle, float deltaTime)
 {
-	float angleUnitOfChange = 0.15;
-	if (key == 'a')
-		__player.playerAngle += angleUnitOfChange;	
-	if (key == 'd')
-		__player.playerAngle -= angleUnitOfChange;
 
-	__player.playerWandVectorX = cos(__player.playerAngle) * PLAYER_WAND_LENGTH;
-	__player.playerWandVectorY = sin(__player.playerAngle) * PLAYER_WAND_LENGTH;	
+	float newAngle = oldAngle;
+	if (istate.mouseDX == 0 && !istate.left && !istate.right) {
+		; // do nothing.
+	} else if (istate.mouseDX != 0) {
+		newAngle -= ((float)istate.mouseDX * 0.005);
+	} else if (istate.left && !istate.right) {
+		newAngle -= (deltaTime * (M_PI / 180.0f));
+	} else if (istate.right && !istate.left) {
+		newAngle += (deltaTime * (M_PI / 180.0f));
+	}
 
-	return __player;
+
+	return newAngle;
 }
 
-int clamp(int value, int min, int max) {
-	return (value < min) ? min : ((value > max) ? max : value);
+Vec2 accelerateBasedOnInput(InputState istate, float angle,
+							double milliDeltaTime)
+{
+	float deltaTime = milliDeltaTime * 0.1;
+	float accelerationFactor = 0.1f;
+	float decelerationFactor = 2.0f;
+
+	Vec2 accel = Vec2::zero();
+	Vec2 direction = Vec2::angleToUnit(angle).correctToView();
+
+	bool anythingPressed = istate.forward || istate.left || istate.back || istate.right;
+
+	if (istate.forward)
+	{
+		// Speed up towards the direction of the player.
+		accel = accel + (direction * accelerationFactor);
+	}
+
+	if (istate.back)
+	{
+		// Speed up away from the direction of the player.
+		accel = accel + (direction * -accelerationFactor);
+	}
+
+	if (istate.strafeLeft)
+	{
+		// Speed up perpendicular to the direction of the player, to the left.
+		// Formula fro vector with components (x, y) is (y, -x).
+		accel = accel + (direction * accelerationFactor).perpendicularLeft();
+	}
+
+	if (istate.strafeRight)
+	{
+		// Formula fro vector with components (x, y) is (-y, x)
+		// for the perpendicular in the opposite direction.
+		accel = accel + (direction * accelerationFactor).perpendicularRight();
+	}
+
+	return accel;
+}
+
+Player inputManager(Player player, InputState istate, double deltaTime)
+{
 	
-	if (value < min) {
-		return min;
-	} else if (value > max) {
-		return max;
-	} else {
-		return value;
-	}
-}
+	float newAngle = calculateNewOrientation(istate, player.playerAngle, deltaTime);
+	Vec2 newDirection = Vec2::angleToUnit(newAngle);
 
-Player keyboardModifyPlayerPosition(unsigned char key, Player __player)
-{
-	float _displacementFactor = 0.5;
-	if (key == 'w')
+
+	Vec2 acceleration =
+		accelerateBasedOnInput(istate, player.playerAngle, deltaTime);
+
+	Vec2 newSpeed =
+		(player.speed + (acceleration * deltaTime)).vec_clamp(-0.8, 0.8);
+
+	Vec2 newPosition = player.position + (player.speed * deltaTime);
+
+	if (pointIsInWall(newPosition))
 	{
-		__player.playerX += _displacementFactor * __player.playerWandVectorX;
-		__player.playerY -= _displacementFactor * __player.playerWandVectorY;
-	}
-	if (key == 's')
-	{
-		__player.playerX -= _displacementFactor * __player.playerWandVectorX;
-		__player.playerY += _displacementFactor * __player.playerWandVectorY;
+		newSpeed = Vec2::zero();
+		newPosition = player.position;
 	}
 
-	return __player;
+	newSpeed = newSpeed - newSpeed * 0.1 * deltaTime;
+
+	std::cout << "new data:\n"
+			  << "speed: x - " << newSpeed.x << " y - " << newSpeed.y 					<< std::endl
+			  << "position: x - " << newPosition.x << " y - " << newPosition.y			<< std::endl
+			  << "direction: x - " << newDirection.x << " y - " << newDirection.y		<< std::endl;
+
+	return Player {
+		.speed = newSpeed,
+		.position = newPosition,
+		.direction = newDirection,
+		.playerAngle = newAngle,
+	};
 }
-
-Player keyboardMovementManager(unsigned char key, Player _player)
-{
-	
-	_player = keyboardModifyPlayerOrientation(key, _player);
-	Player modifiedPlayer = keyboardModifyPlayerPosition(key, _player);
-
-	if (pointIsInWall(modifiedPlayer.playerX, modifiedPlayer.playerY))
-	{
-		modifiedPlayer = _player;
-	}
-	else
-	{
-		_player = modifiedPlayer;
-	}
-		
-	return _player;
-}
-
-
-
-float vectorMagnitude(float x, float y) {
-	return sqrtf((x * x) + (y * y));
-}
-
-Player mouseModifyPlayerOrientation(int mouseRelativeX, int mouseRelativeY, Player __player) 
-{
-       float vecX = (float) (mouseRelativeX - __player.playerX);
-       float vecY = (float) -(mouseRelativeY - __player.playerY);
-
-       float magnitude = vectorMagnitude(vecX, vecY);
-
-       float unitX = vecX / magnitude;
-       float unitY = vecY / magnitude;
-
-       float angle = atan2f(unitY, unitX);
-
-       __player.playerWandVectorX = unitX * PLAYER_WAND_LENGTH;
-       __player.playerWandVectorY = unitY * PLAYER_WAND_LENGTH;
-       __player.playerAngle = angle;
-
-       return __player;
-}
-
-
-
-
