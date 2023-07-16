@@ -13,9 +13,9 @@ float calculateNewOrientation(InputState istate, float oldAngle, float deltaTime
 	} else if (istate.mouseDX != 0) {
 		newAngle -= ((float)istate.mouseDX * 0.005);
 	} else if (istate.left && !istate.right) {
-		newAngle += (deltaTime * 0.02);
+		newAngle += (deltaTime * 0.04);
 	} else if (istate.right && !istate.left) {
-		newAngle -= (deltaTime * 0.02);
+		newAngle -= (deltaTime * 0.04);
 	}
 
 
@@ -24,7 +24,7 @@ float calculateNewOrientation(InputState istate, float oldAngle, float deltaTime
 
 Vec2 accelerateBasedOnInput(InputState istate, float angle)
 {
-	float accelerationFactor = 1.0f;
+	float accelerationFactor = 0.1f;
 	float decelerationFactor = 2.0f;
 
 	Vec2 accel = Vec2::zero();
@@ -70,7 +70,10 @@ Player inputManager(Player player, InputState istate, double milliDeltaTime)
 		accelerateBasedOnInput(istate, newAngle);
 
 	Vec2 newSpeed =
-		(player.speed + (acceleration * deltaTime)).vec_clamp(-0.8, 0.8);
+		(player.speed + acceleration);
+	if (newSpeed.magnitude() > 2.0) {
+		newSpeed = newSpeed * (2.0 / newSpeed.magnitude());
+	}
 
 	Vec2 newPosition = player.position + (player.speed * deltaTime);
 
@@ -80,7 +83,9 @@ Player inputManager(Player player, InputState istate, double milliDeltaTime)
 		newPosition = player.position;
 	}
 
-	newSpeed = newSpeed - newSpeed * 0.05 * deltaTime;
+	if (istate.noButtons()) {
+		newSpeed = newSpeed - newSpeed * 0.05 * deltaTime;
+	}
 	if (newSpeed.magnitude() < FLT_EPSILON) newSpeed = Vec2::zero();
 
 	std::cout << "new data:\n"

@@ -32,7 +32,7 @@ struct InputState
 
 	bool noButtons()
 	{
-		return !forward && !back && !left && !right;
+		return !forward && !back && !strafeLeft && !strafeRight;
 	}
 
 	void resetMouseDelta()
