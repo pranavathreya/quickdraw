@@ -13,7 +13,6 @@ struct Player
 {
 	Vec2 speed = Vec2::zero();
 	Vec2 position = Vec2::zero();
-	Vec2 direction = Vec2::zero();
 	float playerAngle = 0.0f;
 };
 

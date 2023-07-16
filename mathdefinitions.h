@@ -59,7 +59,7 @@ struct Vec2
 		if (std::fabs(magnitude) < FLT_EPSILON)
 			return init;
 		init = init * (1.0 / magnitude);
-		return init;
+		return init.correctToView();
 	}
 
 	static Vec2 zero() { return (Vec2){0.0, 0.0}; }
@@ -67,6 +67,11 @@ struct Vec2
 	static Vec2 one() { return (Vec2){1.0, 1.0}; }
 };
 
+/**
+ * @brief Applies a transformation to make this vector align with the top-down coordinate system the view uses.
+ * 
+ * @return Vec2 
+ */
 Vec2 Vec2::correctToView()
 {
 	return Vec2{.x = this->x, .y = -this->y};

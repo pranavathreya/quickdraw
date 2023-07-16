@@ -14,7 +14,6 @@ void init(Player *player)
 	gluOrtho2D(0, WIDTH, HEIGHT, 0);
 	player->position = Vec2{.x = 300, .y = 300};
 	player->playerAngle = M_PI * 0.5;
-	player->direction = Vec2::angleToUnit(player->playerAngle);
 }
 
 void display(Player *player)

@@ -13,24 +13,22 @@ float calculateNewOrientation(InputState istate, float oldAngle, float deltaTime
 	} else if (istate.mouseDX != 0) {
 		newAngle -= ((float)istate.mouseDX * 0.005);
 	} else if (istate.left && !istate.right) {
-		newAngle -= (deltaTime * (M_PI / 180.0f));
+		newAngle += (deltaTime * 0.02);
 	} else if (istate.right && !istate.left) {
-		newAngle += (deltaTime * (M_PI / 180.0f));
+		newAngle -= (deltaTime * 0.02);
 	}
 
 
 	return newAngle;
 }
 
-Vec2 accelerateBasedOnInput(InputState istate, float angle,
-							double milliDeltaTime)
+Vec2 accelerateBasedOnInput(InputState istate, float angle)
 {
-	float deltaTime = milliDeltaTime * 0.1;
-	float accelerationFactor = 0.1f;
+	float accelerationFactor = 1.0f;
 	float decelerationFactor = 2.0f;
 
 	Vec2 accel = Vec2::zero();
-	Vec2 direction = Vec2::angleToUnit(angle).correctToView();
+	Vec2 direction = Vec2::angleToUnit(angle);
 
 	bool anythingPressed = istate.forward || istate.left || istate.back || istate.right;
 
@@ -63,15 +61,13 @@ Vec2 accelerateBasedOnInput(InputState istate, float angle,
 	return accel;
 }
 
-Player inputManager(Player player, InputState istate, double deltaTime)
+Player inputManager(Player player, InputState istate, double milliDeltaTime)
 {
-	
+	float deltaTime = milliDeltaTime * 0.1;
 	float newAngle = calculateNewOrientation(istate, player.playerAngle, deltaTime);
-	Vec2 newDirection = Vec2::angleToUnit(newAngle);
-
 
 	Vec2 acceleration =
-		accelerateBasedOnInput(istate, player.playerAngle, deltaTime);
+		accelerateBasedOnInput(istate, newAngle);
 
 	Vec2 newSpeed =
 		(player.speed + (acceleration * deltaTime)).vec_clamp(-0.8, 0.8);
@@ -84,17 +80,17 @@ Player inputManager(Player player, InputState istate, double deltaTime)
 		newPosition = player.position;
 	}
 
-	newSpeed = newSpeed - newSpeed * 0.1 * deltaTime;
+	newSpeed = newSpeed - newSpeed * 0.05 * deltaTime;
+	if (newSpeed.magnitude() < FLT_EPSILON) newSpeed = Vec2::zero();
 
 	std::cout << "new data:\n"
 			  << "speed: x - " << newSpeed.x << " y - " << newSpeed.y 					<< std::endl
 			  << "position: x - " << newPosition.x << " y - " << newPosition.y			<< std::endl
-			  << "direction: x - " << newDirection.x << " y - " << newDirection.y		<< std::endl;
+			  << "angle - " << newAngle													<< std::endl;
 
 	return Player {
 		.speed = newSpeed,
 		.position = newPosition,
-		.direction = newDirection,
 		.playerAngle = newAngle,
 	};
 }

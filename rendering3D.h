@@ -21,7 +21,7 @@ void drawPlayerBody2D(Player __player)
 
 void drawPlayerWand2D(Player __player)
 {
-	Vec2 wand = (__player.direction * PLAYER_WAND_LENGTH).correctToView();
+	Vec2 wand = (Vec2::angleToUnit(__player.playerAngle) * PLAYER_WAND_LENGTH);
 	glColor3f(1, 1, 0);
 	glLineWidth(3);
 	glBegin(GL_LINES);
