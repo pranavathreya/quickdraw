@@ -24,7 +24,10 @@ void display()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	drawMap2D();
 	drawPlayer2D(player);
+	fprintf(stdout, "main.c in: playerX: %f, playerY: %f\n", player.playerX, player.playerY);
 	drawRays(player);
+	fprintf(stdout, "main.c out: playerX: %f, playerY: %f\n", player.playerX, player.playerY);
+	fflush(stdout);
 	drawColumns(player);
 	glutSwapBuffers();
 }
