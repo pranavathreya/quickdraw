@@ -1,14 +1,6 @@
 #include <GL/glut.h>
 #include "variables.h"
 
-struct RayEndPoint
-{
-	float rayX;
-	float rayY;
-	float rayAngle;
-};
-
-struct RayEndPoint rayEndPointArray[RAY_COUNT];
 
 void drawPlayerBody2D(Player __player)
 {
@@ -70,62 +62,111 @@ void drawMap2D()
 			else
 				glColor3f(0,0,0);
 
-			drawSingleBlock2D(currentColumn, currentRow, 2);
+			drawSingleBlock2D(currentColumn, currentRow, 1);
 		}
 }
 
 int pointIsInWall(float x, float y)
 {
 	int mapBlockIndex = (mapColumns*(((int)y)/mapBlockSideLength)) + (((int)x)/mapBlockSideLength);
+	
+	if (mapBlockIndex > 63 || mapBlockIndex < 0)
+		return 1;
+
 	return (map[mapBlockIndex]==1);
 }
 
-struct RayEndPoint findRayEndPoint( float _playerX, float _playerY, float _rayAngle)
+typedef struct Ray
 {
-	struct RayEndPoint rayEndPoint = { _playerX, _playerY, _rayAngle };
+	float directionVectorX;
+	float directionVectorY;
+	float rayEndX;
+	float rayEndY;
+	float rayAngle;
+	float rayLength;
+	int isHorizontalTraversing;
+	int isGreen;
+} Ray;
 
-	for(int i=0; !pointIsInWall(rayEndPoint.rayX, rayEndPoint.rayY); ++i)
-	{
-		rayEndPoint.rayX = (float) ((( (int)_playerX) / mapBlockSideLength ) + i ) * mapBlockSideLength;
-		printf("rayX = %f; tan = %f\n", rayEndPoint.rayX, tan(rayEndPoint.rayAngle));
-		rayEndPoint.rayY = tan(rayEndPoint.rayAngle) * rayEndPoint.rayX ;
-	}
-
-
-	return rayEndPoint;
-}	
-
-void drawSingleRay(float _playerX, float _playerY, struct RayEndPoint _rayEndPoint)
+void drawSingleRay(int redOrGreen, int lineWidth, Ray __ray, Player ___player)
 {
-	glColor3f(0,1,0);
-	glLineWidth(1);
+	redOrGreen ? glColor3f(1,0,0) : glColor3f(0,1,0);
+	glLineWidth(lineWidth);
 	glBegin(GL_LINES);
-	glVertex2f(_playerX, _playerY);
-	glVertex2f(_rayEndPoint.rayX, _rayEndPoint.rayY);
+	glVertex2f(___player.playerX, ___player.playerY);
+	glVertex2f(__ray.rayEndX, __ray.rayEndY);
 	glEnd();
 }
 
+struct Ray rayArray[RAY_COUNT];
+
+float calculateRayLength(Ray ___ray, Player ____player)
+{
+	return sqrt(pow(___ray.rayEndX-____player.playerX, 2) + pow(___ray.rayEndY-____player.playerY, 2));
+}
+
+Ray findRayEndPointHorizontalTraversal(Ray __ray, Player ___player)
+{
+	for (int i=0; !pointIsInWall(__ray.rayEndX, __ray.rayEndY); ++i)
+	{
+		__ray.rayEndX = (__ray.directionVectorX > 0) ? (((int)(___player.playerX) >> 6)+(i+1)) << 6 : (((int)(___player.playerX) >> 6)-i << 6)-1;
+		__ray.rayEndY = ___player.playerY + (__ray.directionVectorY/fabs(__ray.directionVectorY)) * 
+		       	(fabs(__ray.rayEndX - ___player.playerX) * fabs(__ray.directionVectorY / __ray.directionVectorX));
+	}
+	__ray.rayLength = calculateRayLength(__ray, ___player);
+	__ray.isHorizontalTraversing = 1;
+	__ray.isGreen = 1;
+	drawSingleRay(0, 1, __ray, ___player);
+	return __ray;
+
+}
+
+Ray findRayEndPointVerticalTraversal(Ray __ray, Player ___player)
+{
+	for (int i=0; !pointIsInWall(__ray.rayEndX, __ray.rayEndY); ++i)
+	{
+		__ray.rayEndY = (__ray.directionVectorY > 0) ? (((int)(___player.playerY) >> 6)+(i+1)) << 6 : (((int)(___player.playerY) >> 6)-i << 6)-1;
+		__ray.rayEndX = ___player.playerX + (__ray.directionVectorX/fabs(__ray.directionVectorX)) *
+			(fabs(__ray.rayEndY - ___player.playerY) * fabs(__ray.directionVectorX / __ray.directionVectorY));
+	}
+	__ray.rayLength = calculateRayLength(__ray, ___player);
+	__ray.isHorizontalTraversing = 0;
+	__ray.isGreen = 0;
+	drawSingleRay(1, 3, __ray, ___player);
+	return __ray;
+
+}
+
+Ray findRayEndPoint(Ray _ray, Player __player)
+{
+	Ray _rayVerticalTraversal = findRayEndPointVerticalTraversal(_ray, __player);
+	Ray _rayHorizontalTraversal = findRayEndPointHorizontalTraversal(_ray, __player);
+	
+	return (_rayVerticalTraversal.rayLength <= _rayHorizontalTraversal.rayLength) ? _rayVerticalTraversal : _rayHorizontalTraversal;
+}	
+
 void drawRays(Player _player)
 {
-	struct RayEndPoint* rayEndPointArrayAddress = rayEndPointArray;	
+	struct Ray* rayArrayAddress = rayArray;	
 
 	float rayAngle = _player.playerAngle-(PI*0.25);
 	
 	for (int i=0; i<RAY_COUNT; ++i, rayAngle+=0.02)
 	{
-		struct RayEndPoint rayEndPoint = findRayEndPoint(_player.playerX, _player.playerY, rayAngle);
-		*rayEndPointArrayAddress++ = rayEndPoint;	// Append point to array
-		drawSingleRay(_player.playerX, _player.playerY, rayEndPoint);	
+		Ray ray = { cos(rayAngle), -1*sin(rayAngle), _player.playerX, _player.playerY, rayAngle };
+
+		ray = findRayEndPoint(ray, _player);
+		*rayArrayAddress++ = ray;	// Append point to array
 	}
 }
 
-void drawSingleColumn(float _columnHeight, int position)
+void drawSingleColumn(int redOrGreen, float _columnHeight, int position)
 {
-		glColor3f(0,1,0);
+		redOrGreen ? glColor3f(0,0.7,0) : glColor3f(0,0.8,0);
 		glLineWidth(9);
 		glBegin(GL_LINES);
-		glVertex2f((WIDTH/2.0)+((RAY_COUNT-1)-position)*9, (HEIGHT/4.0)-_columnHeight/2);
-		glVertex2f((WIDTH/2.0)+((RAY_COUNT-1)-position)*9, (HEIGHT/4.0)+_columnHeight/2);
+		glVertex2f((WIDTH/2.0)+((RAY_COUNT-1)-position)*7, (HEIGHT/2.0)-_columnHeight/2);
+		glVertex2f((WIDTH/2.0)+((RAY_COUNT-1)-position)*7, (HEIGHT/2.0)+_columnHeight/2);
 		glEnd();
 }
 
@@ -133,8 +174,10 @@ void drawColumns(Player _player)
 {
 	for (int i=0; i<(RAY_COUNT-1); i++)
 	{
-		float columnHeight = fabs( cos(rayEndPointArray[i].rayAngle) / (rayEndPointArray[i].rayX - _player.playerX) ) * 2.5e4;
-		drawSingleColumn(columnHeight, i);
+		float columnHeight = rayArray[i].isHorizontalTraversing ? (1/fabs(rayArray[i].rayEndX - _player.playerX)) * 2.5e4 : (1/rayArray[i].rayLength) * 2.5e4;
+		fprintf(stdout, "columnHeight: %f\n", columnHeight);
+		columnHeight = columnHeight > HEIGHT ? HEIGHT : columnHeight;
+		drawSingleColumn(!rayArray[i].isGreen, columnHeight, i);
 	}
 }
 

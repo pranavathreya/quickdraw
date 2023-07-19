@@ -8,6 +8,11 @@ Player keyboardModifyPlayerOrientation(unsigned char key, Player __player)
 	if (key == 'd')
 		__player.playerAngle -= angleUnitOfChange;
 
+	 if (__player.playerAngle >= 2*PI)
+		__player.playerAngle = 0; 
+	 else if (__player.playerAngle <= 0) 
+		__player.playerAngle = 2*PI;
+
 	__player.playerWandVectorX = cos(__player.playerAngle) * PLAYER_WAND_LENGTH;
 	__player.playerWandVectorY = sin(__player.playerAngle) * PLAYER_WAND_LENGTH;	
 
