@@ -9,12 +9,19 @@
 #define PLAYER_WAND_LENGTH 18.0
 #define RAY_COUNT 200
 
-struct Player
+typedef struct Player
 {
 	Vec2 speed = Vec2::zero();
 	Vec2 position = Vec2::zero();
 	float playerAngle = 0.0f;
-};
+} Player;
+
+typedef struct Color
+{
+	float red;
+	float green;
+	float blue;
+} Color;
 
 // TODO: stdize fieldnames, compress dirVec into one field
 typedef struct Ray
@@ -35,13 +42,6 @@ typedef struct Column
 	float columnWidth;
 	Color color;
 } Column;
-
-typedef struct Color
-{
-	float red;
-	float green;
-	float blue;
-} Color;
 
 struct InputState
 {

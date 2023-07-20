@@ -7,18 +7,18 @@ void drawPlayerBody2D(Player _player)
 	glColor3f(1, 1, 0);
 	glPointSize(8);
 	glBegin(GL_POINTS);
-	glVertex2f(__player.position.x, __player.position.y);
+	glVertex2f(_player.position.x, _player.position.y);
 	glEnd();
 }
 
 void drawPlayerWand2D(Player _player)
 {
-	Vec2 wand = (Vec2::angleToUnit(__player.playerAngle) * PLAYER_WAND_LENGTH);
+	Vec2 wand = (Vec2::angleToUnit(_player.playerAngle) * PLAYER_WAND_LENGTH);
 	glColor3f(1, 1, 0);
 	glLineWidth(3);
 	glBegin(GL_LINES);
-	glVertex2f(__player.position.x, __player.position.y);
-	glVertex2f(__player.position.x + wand.x, __player.position.y + wand.y);
+	glVertex2f(_player.position.x, _player.position.y);
+	glVertex2f(_player.position.x + wand.x, _player.position.y + wand.y);
 	glEnd();
 }
 
@@ -81,7 +81,7 @@ void drawSingleRay(int redOrGreen, int lineWidth, Ray ray, Player _player)
 	glLineWidth(lineWidth);
 	glBegin(GL_LINES);
 	glVertex2f(_player.position.x, _player.position.y);
-	glVertex2f(ray.rayEndX, ray.rayEndY);
+	glVertex2f(ray.rayEndPosition.x, ray.rayEndPosition.y);
 	glEnd();
 }
 
@@ -89,7 +89,7 @@ struct Ray rayArray[RAY_COUNT];
 
 float calculateRayLength(Ray ray, Player _player)
 {
-	return sqrt(pow(ray.rayEndX-_player.playerX, 2) + pow(ray.rayEndY-_player.playerY, 2));
+	return sqrt(pow(ray.rayEndPosition.x-_player.position.x, 2) + pow(ray.rayEndPosition.y-_player.position.y, 2));
 }
 
 // TODO: Replace Player refs with Vec2 position
@@ -97,9 +97,9 @@ Ray findRayEndPointHorizontalTraversal(Ray ray, Player _player)
 {
 	for (int i=0; !pointIsInWall(ray.rayEndPosition); ++i)
 	{
-		ray.rayEndX = (ray.directionVectorX > 0) ? (((int)(_player.position.x) >> 6)+(i+1)) << 6 : (((int)(_player.position.x) >> 6)-i << 6)-1;
-		ray.rayEndY = _player.position.y + (ray.directionVectorY/fabs(ray.directionVectorY)) * 
-		       	(fabs(ray.rayEndX - _player.position.x) * fabs(ray.directionVectorY / ray.directionVectorX));
+		ray.rayEndPosition.x = (ray.directionVectorX > 0) ? (((int)(_player.position.x) >> 6)+(i+1)) << 6 : (((int)(_player.position.x) >> 6)-i << 6)-1;
+		ray.rayEndPosition.y = _player.position.y + (ray.directionVectorY/fabs(ray.directionVectorY)) * 
+		       	(fabs(ray.rayEndPosition.x - _player.position.x) * fabs(ray.directionVectorY / ray.directionVectorX));
 	}
 	ray.rayLength = calculateRayLength(ray, _player);
 	ray.isHorizontalTraversing = 1;
@@ -109,7 +109,7 @@ Ray findRayEndPointHorizontalTraversal(Ray ray, Player _player)
 	ray.color.blue = 0;
 	
 	drawSingleRay(0, 1, ray, _player);
-	fprintf(stdout, "horizontal: rayLength: %f, rayEndX: %f, rayEndY: %f\n", ray.rayLength, ray.rayEndX, ray.rayEndY);
+	fprintf(stdout, "horizontal: rayLength: %f, rayEndX: %f, rayEndY: %f\n", ray.rayLength, ray.rayEndPosition.x, ray.rayEndPosition.y);
 	return ray;
 
 }
@@ -118,9 +118,9 @@ Ray findRayEndPointVerticalTraversal(Ray ray, Player _player)
 {
 	for (int i=0; !pointIsInWall(ray.rayEndPosition); ++i)
 	{
-		ray.rayEndY = (ray.directionVectorY > 0) ? (((int)(_player.position.y) >> 6)+(i+1)) << 6 : (((int)(_player.position.y) >> 6)-i << 6)-1;
-		ray.rayEndX = _player.position.x + (ray.directionVectorX/fabs(ray.directionVectorX)) *
-			(fabs(ray.rayEndY - _player.position.y) * fabs(ray.directionVectorX / ray.directionVectorY));
+		ray.rayEndPosition.y = (ray.directionVectorY > 0) ? (((int)(_player.position.y) >> 6)+(i+1)) << 6 : (((int)(_player.position.y) >> 6)-i << 6)-1;
+		ray.rayEndPosition.x = _player.position.x + (ray.directionVectorX/fabs(ray.directionVectorX)) *
+			(fabs(ray.rayEndPosition.y - _player.position.y) * fabs(ray.directionVectorX / ray.directionVectorY));
 	}
 	ray.rayLength = calculateRayLength(ray, _player);
 	ray.isHorizontalTraversing = 0;
@@ -130,7 +130,7 @@ Ray findRayEndPointVerticalTraversal(Ray ray, Player _player)
 	ray.color.blue = 0;
 	
 	drawSingleRay(1, 3, ray, _player);
-	fprintf(stdout, "vertical: rayLength: %f, rayEndX: %f, rayEndY: %f\n", ray.rayLength, ray.rayEndX, ray.rayEndY);
+	fprintf(stdout, "vertical: rayLength: %f, rayEndX: %f, rayEndY: %f\n", ray.rayLength, ray.rayEndPosition.x, ray.rayEndPosition.y);
 	return ray;
 
 }
@@ -150,7 +150,7 @@ void drawRays(const Player _player)
 	fprintf(stdout, "rendering3D.h in: playerX: %f, playerY: %f\n", _player.position.x, _player.position.y);
 	float rayAngle = _player.playerAngle+(M_PI*0.25);
 	
-	while (rayAngle>=_player.playerAngle-(M_PI*0.24))
+	while (rayAngle>=_player.playerAngle-(M_PI*0.25))
 	{
 		Ray ray = { .directionVectorX=cos(rayAngle), .directionVectorY=-1*sin(rayAngle), 
 			.rayEndPosition=(Vec2){_player.position.x, _player.position.y}, rayAngle };
