@@ -1,3 +1,2 @@
-
-gcc main.c -o main.o -lglut -lGL -lGLU -lm
+g++ main.cc -o main.o -lGL -lGLU -lm -lSDL2 -g
 
