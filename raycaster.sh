@@ -1,1 +1,0 @@
-./compile.sh; ./Source.o
