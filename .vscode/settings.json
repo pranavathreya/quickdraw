@@ -33,6 +33,11 @@
         "*.inc": "cpp",
         "cmath": "cpp",
         "cstdlib": "cpp",
-        "random": "cpp"
-    }
+        "random": "cpp",
+        "variables.h": "cpp",
+        "mathdefinitions.h": "cpp",
+        "physics.h": "cpp",
+        "rendering3d.h": "cpp"
+    },
+    "C_Cpp.default.compilerPath": "/usr/bin/clang"
 }
