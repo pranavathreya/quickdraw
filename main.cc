@@ -19,8 +19,8 @@ void init(Player *player)
 void display(Player *player)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	drawMap2D();
-	drawPlayer2D(*player);
+	//drawMap2D();
+	//drawPlayer2D(*player);
 	drawRays(*player);
 	drawColumns(*player);
 }

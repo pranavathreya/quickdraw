@@ -4,8 +4,8 @@
 
 #include "mathdefinitions.h"
 
-#define WIDTH 1024
-#define HEIGHT 512
+#define WIDTH 512 
+#define HEIGHT 512 
 #define PLAYER_WAND_LENGTH 18.0
 #define RAY_COUNT 200
 

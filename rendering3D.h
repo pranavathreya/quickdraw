@@ -33,11 +33,11 @@ int mapColumns = 8, mapRows = 8, mapBlockSideLength = 64;
 int map[]=
 {
 	1,1,1,1,1,1,1,1,
-	1,0,0,0,0,0,0,1,
-	1,0,0,0,0,0,0,1,
-	1,0,0,0,0,0,0,1,
-	1,0,0,0,0,0,0,1,
-	1,0,0,0,0,0,0,1,
+	1,0,1,0,0,0,0,1,
+	1,0,1,0,0,0,0,1,
+	1,0,1,0,0,0,0,1,
+	1,0,1,0,0,0,0,1,
+	1,0,0,0,0,1,0,1,
 	1,0,0,0,0,0,0,1,
 	1,1,1,1,1,1,1,1,
 };
@@ -108,7 +108,7 @@ Ray findRayEndPointHorizontalTraversal(Ray ray, Player _player)
        	ray.color.green = 0.72;
 	ray.color.blue = 0;
 	
-	drawSingleRay(0, 1, ray, _player);
+	//drawSingleRay(0, 1, ray, _player);
 	fprintf(stdout, "horizontal: rayLength: %f, rayEndX: %f, rayEndY: %f\n", ray.rayLength, ray.rayEndPosition.x, ray.rayEndPosition.y);
 	return ray;
 
@@ -129,7 +129,7 @@ Ray findRayEndPointVerticalTraversal(Ray ray, Player _player)
        	ray.color.green = 0.7;
 	ray.color.blue = 0;
 	
-	drawSingleRay(1, 3, ray, _player);
+	//drawSingleRay(1, 3, ray, _player);
 	fprintf(stdout, "vertical: rayLength: %f, rayEndX: %f, rayEndY: %f\n", ray.rayLength, ray.rayEndPosition.x, ray.rayEndPosition.y);
 	return ray;
 
@@ -176,15 +176,15 @@ void drawSingleColumn(Column column)
 
 void drawColumns(const Player _player)
 {
-	int displayWidth = (WIDTH / 2) + 46;
-	int columnWidth = (displayWidth / RAY_COUNT);
+	float displayWidth = WIDTH;
+	float columnWidth = (displayWidth / RAY_COUNT);
 	for (int i=0; i<RAY_COUNT; i++)
 	{
 		Column column;
 		column.columnWidth = columnWidth;
 		column.columnHeight = (1/fabs(rayArray[i].rayLength*cos(rayArray[i].rayAngle-_player.playerAngle))) * 2.5e4;
 		column.columnHeight = column.columnHeight > HEIGHT ? HEIGHT : column.columnHeight;
-		column.columnX = (WIDTH * 0.5) + (i * column.columnWidth + (column.columnWidth * 0.5));
+		column.columnX = (i * column.columnWidth + (column.columnWidth * 0.5));
 		column.color = rayArray[i].color;
 		drawSingleColumn(column);
 	}
