@@ -25,12 +25,17 @@ void display(Player *player)
 	drawColumns(*player);
 }
 
+
+#include "networkTools.h"
 int main(int argc, char *argv[])
 {
+	int clientFileDes, serverFileDes;
 
 	Player player;
 	// This will automatically clean up when we quit.
 	std::unique_ptr<WindowContext> ctx = sdl_init();
 	init(&player);
-	mainLoop(&player, ctx->window, &display);
+	clientFileDes = bindOrConnectToAddress(argv[1], argv[2], 1);
+	serverFileDes = bindOrConnectToAddress(argv[1], argv[3], 0);
+	mainLoop(&player, ctx->window, &display, serverFileDes, argv[4]);
 }

@@ -36,7 +36,15 @@ std::unique_ptr<WindowContext> sdl_init()
 		new WindowContext{.window = window, .glCtx = gContext});
 }
 
-void mainLoop(Player *player, SDL_Window *window, void (*displayCallback)(Player *)) {
+
+#include <sys/socket.h>
+#include "networkTools.h"
+#include <netdb.h>
+#include <unistd.h>
+
+#define BUF_SIZE 18 
+
+void mainLoop(Player *player, SDL_Window *window, void (*displayCallback)(Player *), int serverFileDes, char* message) {
 	InputState istate;
 
 	uint64_t NOW = SDL_GetPerformanceCounter();
@@ -57,6 +65,7 @@ void mainLoop(Player *player, SDL_Window *window, void (*displayCallback)(Player
 		if (istate.q)
 			break;
 
+		write(serverFileDes, message, sizeof(message));
 		*player = inputManager(*player, istate, deltaTime);
 		istate.resetMouseDelta();
 
