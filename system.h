@@ -57,7 +57,7 @@ void mainLoop(Player *player, SDL_Window *window, void (*displayCallback)(Player
 		if (istate.q)
 			break;
 
-		*player = inputManager(*player, istate, deltaTime);
+		*player = updatePhysics(*player, istate, deltaTime);
 		istate.resetMouseDelta();
 
 		displayCallback(player);

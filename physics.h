@@ -60,7 +60,7 @@ Vec2 accelerateBasedOnInput(InputState istate, float angle)
 	return accel;
 }
 
-Player inputManager(Player player, InputState istate, double milliDeltaTime)
+Player updatePhysics(Player player, InputState istate, double milliDeltaTime)
 {
 	float deltaTime = milliDeltaTime * 0.1;
 	float newAngle = calculateNewOrientation(istate, player.playerAngle, deltaTime);
