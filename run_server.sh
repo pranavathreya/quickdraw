@@ -1,1 +1,1 @@
-gcc server.c -o server.o; ./server.o 8080
+g++ server.cc -o server.o -lGL -lGLU -lSDL2 -lm -g; ./server.o localhost 8080

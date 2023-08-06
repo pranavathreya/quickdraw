@@ -2,6 +2,8 @@
 
 #include <memory>
 #include <SDL2/SDL.h>
+#include <unistd.h>
+#include <netdb.h>
 
 #include "input.h"
 
@@ -36,20 +38,39 @@ std::unique_ptr<WindowContext> sdl_init()
 		new WindowContext{.window = window, .glCtx = gContext});
 }
 
+void sendMessageToServer(int serverFileDes, char* messageBuffer, const Player *player,
+	       InputState istate, double deltaTime)
+{
+	int errsv, bytesWritten;
 
-#include <sys/socket.h>
-#include "networkTools.h"
-#include <netdb.h>
-#include <unistd.h>
+	memset(messageBuffer, '\0', MSG_SIZE);
+	snprintf(messageBuffer, MSG_SIZE, "%f\n%f\n%f\n%f\n%f\n", 
+			player->speed.x,
+			player->speed.y,
+			player->position.x,
+			player->position.y,
+			player->playerAngle);
 
-#define BUF_SIZE 18 
+	bytesWritten = write(serverFileDes, messageBuffer, MSG_SIZE);
+	if (bytesWritten != MSG_SIZE) 
+	{
+		fprintf(stderr, "partial/failed write: %d/%d\n", bytesWritten, MSG_SIZE);
+		errsv = errno;
+		gai_strerror(errsv);
+		exit(EXIT_FAILURE);
+	}
 
-void mainLoop(Player *player, SDL_Window *window, void (*displayCallback)(Player *), int serverFileDes, char* message) {
+	fprintf(stderr, "client: wrote %d bytes of messageBuffer to server:\n%s",
+		       	bytesWritten, messageBuffer);
+}
+
+void mainLoop(Player *player, SDL_Window *window, void (*displayCallback)(Player *), int serverFileDes) {
 	InputState istate;
 
 	uint64_t NOW = SDL_GetPerformanceCounter();
 	uint64_t LAST = 0;
 	double deltaTime = 0;
+	char messageBuffer[MSG_SIZE];
 
 	// While application is running
 	while (true)
@@ -64,8 +85,8 @@ void mainLoop(Player *player, SDL_Window *window, void (*displayCallback)(Player
 
 		if (istate.q)
 			break;
-
-		write(serverFileDes, message, sizeof(message));
+		
+		sendMessageToServer(serverFileDes, messageBuffer, player, istate, deltaTime);
 		*player = inputManager(*player, istate, deltaTime);
 		istate.resetMouseDelta();
 

@@ -37,5 +37,5 @@ int main(int argc, char *argv[])
 	init(&player);
 	clientFileDes = bindOrConnectToAddress(argv[1], argv[2], 1);
 	serverFileDes = bindOrConnectToAddress(argv[1], argv[3], 0);
-	mainLoop(&player, ctx->window, &display, serverFileDes, argv[4]);
+	mainLoop(&player, ctx->window, &display, serverFileDes);
 }

@@ -67,7 +67,8 @@ int getSocket(int _bind, struct addrinfo *result)
 	getnameinfo(rp->ai_addr, rp->ai_addrlen,
 			finalHost, NI_MAXHOST,
 			serv, NI_MAXSERV, 0);
-	fprintf(stderr, "getServerFileDescriptor: successfully connected/bound to: %s:%s\n", finalHost, serv);
+	fprintf(stderr, "getServerFileDescriptor: successfully %s to: %s:%s\n",
+		       _bind ? "bound" : "connected",	finalHost, serv);
 
 	return sfd;
 	
