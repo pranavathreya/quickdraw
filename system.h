@@ -39,24 +39,34 @@ std::unique_ptr<WindowContext> sdl_init()
 }
 
 void sendMessageToServer(int serverFileDes, char* messageBuffer, const Player *player,
-	       InputState istate, double deltaTime)
+	       InputState *istate, double deltaTime)
 {
 	int errsv, bytesWritten;
 
 	memset(messageBuffer, '\0', MSG_SIZE);
-	snprintf(messageBuffer, MSG_SIZE, "%f\n%f\n%f\n%f\n%f\n", 
+	snprintf(messageBuffer, MSG_SIZE,
+		       	"%f\n%f\n%f\n%f\n%f\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%u\n%u\n%d\n%d\n%f\n", 
 			player->speed.x,
 			player->speed.y,
 			player->position.x,
 			player->position.y,
-			player->playerAngle);
-
+			player->playerAngle,
+			istate->q,
+			istate->forward,
+			istate->left,
+			istate->back,
+			istate->right,
+			istate->strafeLeft,
+			istate->strafeRight,
+			istate->mouseX,
+			istate->mouseY,
+			istate->mouseDX,
+			istate->mouseDY,
+			deltaTime);
 	bytesWritten = write(serverFileDes, messageBuffer, MSG_SIZE);
 	if (bytesWritten != MSG_SIZE) 
 	{
 		fprintf(stderr, "partial/failed write: %d/%d\n", bytesWritten, MSG_SIZE);
-		errsv = errno;
-		gai_strerror(errsv);
 		exit(EXIT_FAILURE);
 	}
 
@@ -86,7 +96,8 @@ void mainLoop(Player *player, SDL_Window *window, void (*displayCallback)(Player
 		if (istate.q)
 			break;
 		
-		sendMessageToServer(serverFileDes, messageBuffer, player, istate, deltaTime);
+		sendMessageToServer(serverFileDes, messageBuffer, player, &istate, deltaTime);
+		//exit(EXIT_SUCCESS);
 		*player = inputManager(*player, istate, deltaTime);
 		istate.resetMouseDelta();
 
