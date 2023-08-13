@@ -27,10 +27,10 @@ void display(Player *player)
 int main(int argc, char *argv[])
 {
 
-	Player player;
-	// This will automatically clean up when we quit.
+	Player *player = player_new();
 	WindowContext *ctx = sdl_init();
-	init(&player);
-	mainLoop(&player, ctx->window, &display);
+	init(player);
+	mainLoop(player, ctx->window, &display);
+	free(player);
 	sdl_quit(ctx);
 }
