@@ -1,26 +1,31 @@
 #pragma once
 
-#include <memory>
 #include <SDL2/SDL.h>
 
 #include "input.h"
+#include "physics.h"
 
-std::unique_ptr<WindowContext> sdl_init()
+/**
+ * @brief To correctly manage this pointer, the caller must call sdl_quit()
+ * 
+ * @return WindowContext* 
+ */
+WindowContext *sdl_init()
 {
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0)
 	{
 		printf("Could not init sdl! %s", SDL_GetError());
-		return nullptr;
+		return NULL;
 	}
 
 	SDL_Window *window =
 		SDL_CreateWindow("KBros\' Raycaster", 100, 100, WIDTH, HEIGHT,
 						 SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
-	if (window == nullptr)
+	if (window == NULL)
 	{
 		printf("Could not create sdl window! %s", SDL_GetError());
 		SDL_Quit();
-		return nullptr;
+		return NULL;
 	}
 
 	// Use OpenGL 2.1
@@ -32,19 +37,21 @@ std::unique_ptr<WindowContext> sdl_init()
 	SDL_GL_SetSwapInterval(1);
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 
-	return std::unique_ptr<WindowContext>(
-		new WindowContext{.window = window, .glCtx = gContext});
+	WindowContext *ctx = (WindowContext *) malloc(sizeof(WindowContext));
+	ctx->glCtx = gContext;
+	ctx->window = window;
+	return ctx;
 }
 
-void mainLoop(Player *player, SDL_Window *window, void (*displayCallback)(Player *)) {
-	InputState istate;
+void mainLoop(Player *player, SDL_Window *window, void displayCallback(Player *)) {
+	InputState istate = inputstate_new();
 
 	uint64_t NOW = SDL_GetPerformanceCounter();
 	uint64_t LAST = 0;
 	double deltaTime = 0;
 
 	// While application is running
-	while (true)
+	while (1)
 	{
 		LAST = NOW;
 		NOW = SDL_GetPerformanceCounter();
@@ -57,8 +64,9 @@ void mainLoop(Player *player, SDL_Window *window, void (*displayCallback)(Player
 		if (istate.q)
 			break;
 
-		*player = inputManager(*player, istate, deltaTime);
-		istate.resetMouseDelta();
+		*player = updatePhysics(*player, istate, deltaTime);
+
+		reset_mouse_delta(&istate);
 
 		displayCallback(player);
 		SDL_GL_SwapWindow(window);

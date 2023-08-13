@@ -1,60 +1,36 @@
 #include <stdio.h>
-#include <GL/glut.h>
-#include <math.h>
+#include <SDL2/SDL.h>
+
+#include "variables.h"
 #include "rendering3D.h"
 #include "physics.h"
+#include "input.h"
+#include "system.h"
 
-Player player;
-
-void init()
+void init(Player *player)
 {
-	glClearColor(0.3,0.3,0.3,0);
-	gluOrtho2D(0,WIDTH,HEIGHT,0);
-	player.playerX = 300;
-       	player.playerY = 300;
-	player.playerAngle = PI * 0.5;
-	player.playerWandVectorX = cos(player.playerAngle) *  PLAYER_WAND_LENGTH;
-	player.playerWandVectorY = sin(player.playerAngle) * PLAYER_WAND_LENGTH;
-	player.mouseRelativeX = 0;
-	player.mouseRelativeY = 0;
+	glClearColor(0.3, 0.3, 0.3, 0);
+	gluOrtho2D(0, WIDTH, HEIGHT, 0);
+	player->position = (Vec2) { .x = 300, .y = 300 };
+	player->playerAngle = M_PI * 0.5;
 }
 
-void display()
+void display(Player *player)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	drawMap2D();
-	drawPlayer2D(player);
-	fprintf(stdout, "main.c in: playerX: %f, playerY: %f\n", player.playerX, player.playerY);
-	drawRays(player);
-	fprintf(stdout, "main.c out: playerX: %f, playerY: %f\n", player.playerX, player.playerY);
-	fflush(stdout);
-	drawColumns(player);
-	glutSwapBuffers();
+	drawPlayer2D(*player);
+	drawRays(*player);
+	drawColumns(*player);
 }
 
-void buttons(unsigned char key, int x, int y)
+int main(int argc, char *argv[])
 {
-	player = keyboardMovementManager(key, player);
-	glutPostRedisplay();
-}
 
-void mouse(int x, int y) {
-	player = mouseModifyPlayerOrientation(x, y, player);
-	glutPostRedisplay();
-}
-
-int main(argc, argv)
-int argc;
-char *argv[];
-{
-	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DOUBLE);
-	glutInitWindowSize(WIDTH, HEIGHT);
-	glutCreateWindow("KBros\' Raycaster");
-	init();
-	glutDisplayFunc(display);
-	glutKeyboardFunc(buttons);
-	glutPassiveMotionFunc(mouse);
-	glutMotionFunc(mouse);
-	glutMainLoop();
+	Player *player = player_new();
+	WindowContext *ctx = sdl_init();
+	init(player);
+	mainLoop(player, ctx->window, &display);
+	free(player);
+	sdl_quit(ctx);
 }

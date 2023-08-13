@@ -1,6 +1,6 @@
 #pragma once
 
-#include <iostream>
+#include <math.h>
 
 #include "variables.h"
 
@@ -17,7 +17,7 @@ float calculateNewOrientation(InputState istate, float oldAngle, float deltaTime
 	} else if (istate.right && !istate.left) {
 		newAngle -= (deltaTime * 0.04);
 	}
-	return clamp(newAngle, 0.0, 2*M_PI); // TOTRY: modulo by scaling up
+	return fmod(newAngle, 2*M_PI);
 }
 
 Vec2 accelerateBasedOnInput(InputState istate, float angle)
@@ -25,41 +25,48 @@ Vec2 accelerateBasedOnInput(InputState istate, float angle)
 	float accelerationFactor = 0.1f;
 	float decelerationFactor = 2.0f;
 
-	Vec2 accel = Vec2::zero();
-	Vec2 direction = Vec2::angleToUnit(angle);
+	Vec2 accel =  vec2_zero();
+	Vec2 intermediate1 = vec2_angle_to_unit(angle);
+	Vec2 direction = vec2_correct_to_view(&intermediate1);
 
-	bool anythingPressed = istate.forward || istate.left || istate.back || istate.right;
+	uint8_t anythingPressed = istate.forward || istate.left || istate.back || istate.right;
 
 	if (istate.forward)
 	{
+		Vec2 thing = vec2_mul_scalar(&direction, accelerationFactor);
 		// Speed up towards the direction of the player.
-		accel = accel + (direction * accelerationFactor);
+		accel = vec2_plus_vec2(&accel, &thing);
 	}
 
 	if (istate.back)
 	{
+		Vec2 thing = vec2_mul_scalar(&direction, -accelerationFactor);
 		// Speed up away from the direction of the player.
-		accel = accel + (direction * -accelerationFactor);
+		accel = vec2_plus_vec2(&accel, &thing);
 	}
 
 	if (istate.strafeLeft)
 	{
+		Vec2 thing1 = vec2_mul_scalar(&direction, accelerationFactor);
+		Vec2 thing2 = vec2_perpendicular_left(&thing1);
 		// Speed up perpendicular to the direction of the player, to the left.
 		// Formula fro vector with components (x, y) is (y, -x).
-		accel = accel + (direction * accelerationFactor).perpendicularLeft();
+		accel = vec2_plus_vec2(&accel, &thing2);
 	}
 
 	if (istate.strafeRight)
 	{
+		Vec2 thing1 = vec2_mul_scalar(&direction, accelerationFactor);
+		Vec2 thing2 = vec2_perpendicular_right(&thing1);
 		// Formula fro vector with components (x, y) is (-y, x)
 		// for the perpendicular in the opposite direction.
-		accel = accel + (direction * accelerationFactor).perpendicularRight();
+		accel = vec2_plus_vec2(&accel, &thing2);
 	}
 
 	return accel;
 }
 
-Player inputManager(Player player, InputState istate, double milliDeltaTime)
+Player updatePhysics(Player player, InputState istate, double milliDeltaTime)
 {
 	float deltaTime = milliDeltaTime * 0.1;
 	float newAngle = calculateNewOrientation(istate, player.playerAngle, deltaTime);
@@ -68,30 +75,34 @@ Player inputManager(Player player, InputState istate, double milliDeltaTime)
 		accelerateBasedOnInput(istate, newAngle);
 
 	Vec2 newSpeed =
-		(player.speed + acceleration);
-	if (newSpeed.magnitude() > 2.0) {
-		newSpeed = newSpeed * (2.0 / newSpeed.magnitude());
+		vec2_plus_vec2(&player.speed, &acceleration);
+	if (vec2_magnitude(&newSpeed) > 2.0) {
+		newSpeed = vec2_mul_scalar(&newSpeed, (2.0 / vec2_magnitude(&newSpeed)));
 	}
 
-	Vec2 newPosition = player.position + (player.speed * deltaTime);
+	Vec2 intermediate1 = vec2_mul_scalar(&player.speed, deltaTime);
+	Vec2 newPosition = vec2_plus_vec2(&player.position, &intermediate1);
 
 	if (pointIsInWall(newPosition))
 	{
-		newSpeed = Vec2::zero();
+		Vec2 wallNormal = 
+		newSpeed = vec2_zero();
 		newPosition = player.position;
 	}
 
-	if (istate.noButtons()) {
-		newSpeed = newSpeed - newSpeed * 0.05 * deltaTime;
+	if (input_state_no_buttons(istate)) {
+		Vec2 intermediate2 = vec2_mul_scalar(&newSpeed, 0.05 * deltaTime);
+		newSpeed = vec2_minus_vec2(&newSpeed, &intermediate2);
 	}
-	if (newSpeed.magnitude() < FLT_EPSILON) newSpeed = Vec2::zero();
+	if (vec2_magnitude(&newSpeed) < FLT_EPSILON) newSpeed = vec2_zero();
 
-	std::cout << "new data:\n"
-			  << "speed: x - " << newSpeed.x << " y - " << newSpeed.y 					<< std::endl
-			  << "position: x - " << newPosition.x << " y - " << newPosition.y			<< std::endl
-			  << "angle - " << newAngle													<< std::endl;
+	printf("new data:\n");
+	printf("speed: x - %4.4f y - %4.4f\n", newSpeed.x, newSpeed.y);
+	printf("position: x - %4.4f y - %4.4f\n", newPosition.x, newPosition.y);
+	printf("angle - %f\n", newAngle);
 
-	return Player {
+
+	return (Player) {
 		.speed = newSpeed,
 		.position = newPosition,
 		.playerAngle = newAngle,
