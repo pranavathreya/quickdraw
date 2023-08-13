@@ -17,7 +17,7 @@ float calculateNewOrientation(InputState istate, float oldAngle, float deltaTime
 	} else if (istate.right && !istate.left) {
 		newAngle -= (deltaTime * 0.04);
 	}
-	return fmod(newAngle, 2*M_PI); // TOTRY: modulo by scaling up
+	return fmod(newAngle, 2*M_PI);
 }
 
 Vec2 accelerateBasedOnInput(InputState istate, float angle)
