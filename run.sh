@@ -1,1 +1,1 @@
-./compile.sh; ./main.o localhost 8081 8080 fuck
+run_server.sh; ./main.o localhost 8081 8080 fuck

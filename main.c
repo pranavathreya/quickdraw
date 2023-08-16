@@ -1,4 +1,3 @@
-#include <memory>
 #include <stdio.h>
 #include <SDL2/SDL.h>
 
@@ -12,7 +11,7 @@ void init(Player *player)
 {
 	glClearColor(0.3, 0.3, 0.3, 0);
 	gluOrtho2D(0, WIDTH, HEIGHT, 0);
-	player->position = Vec2{.x = 300, .y = 300};
+	player->position = (Vec2) {.x = 300, .y = 300};
 	player->playerAngle = M_PI * 0.5;
 }
 
@@ -31,11 +30,12 @@ int main(int argc, char *argv[])
 {
 	int clientFileDes, serverFileDes;
 
-	Player player;
-	// This will automatically clean up when we quit.
-	std::unique_ptr<WindowContext> ctx = sdl_init();
-	init(&player);
+	Player *player = player_new();
+	WindowContext *ctx = sdl_init();
+	init(player);
 	clientFileDes = bindOrConnectToAddress(argv[1], argv[2], 1);
 	serverFileDes = bindOrConnectToAddress(argv[1], argv[3], 0);
-	mainLoop(&player, ctx->window, &display, serverFileDes);
+	mainLoop(player, ctx->window, &display, serverFileDes);
+	free(player);
+	sdl_quit(ctx);
 }

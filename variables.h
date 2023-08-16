@@ -12,10 +12,24 @@
 
 typedef struct Player
 {
-	Vec2 speed = Vec2::zero();
-	Vec2 position = Vec2::zero();
-	float playerAngle = 0.0f;
+	Vec2 speed;
+	Vec2 position;
+	float playerAngle;
 } Player;
+
+Player *player_new() 
+{
+	Vec2 speed = vec2_zero();
+	Vec2 position = vec2_zero();
+	float playerAngle = 0.0f;
+
+	Player *player = (Player *) malloc(sizeof(Player));
+	player->speed = speed;
+	player->position = position;
+	player->playerAngle = playerAngle;
+
+	return player;
+}
 
 typedef struct Color
 {
@@ -29,7 +43,7 @@ typedef struct Ray
 {
 	float directionVectorX;
 	float directionVectorY;
-	Vec2 rayEndPosition = Vec2::zero();
+	Vec2 rayEndPosition;
 	float rayAngle;
 	float rayLength;
 	int isHorizontalTraversing;
@@ -44,50 +58,64 @@ typedef struct Column
 	Color color;
 } Column;
 
-struct InputState
+typedef struct
 {
-	bool q = false;
-	bool forward = false;
-	bool left = false;
-	bool back = false;
-	bool right = false;
-	bool strafeLeft = false;
-	bool strafeRight = false;
-	uint32_t mouseX = 0;
-	uint32_t mouseY = 0;
-	int32_t mouseDX = 0;
-	int32_t mouseDY = 0;
+	uint8_t q;
+	uint8_t forward;
+	uint8_t left;
+	uint8_t back;
+	uint8_t right;
+	uint8_t strafeLeft;
+	uint8_t strafeRight;
+	uint32_t mouseX;
+	uint32_t mouseY;
+	int32_t mouseDX;
+	int32_t mouseDY;
+} InputState;
 
-	bool noButtons()
-	{
-		return !forward && !back && !strafeLeft && !strafeRight;
-	}
+InputState inputstate_new() {
+	return (InputState) {
+		.q = 0,
+		.forward = 0,
+		.left = 0,
+		.back = 0,
+		.right = 0,
+		.strafeLeft = 0,
+		.strafeRight = 0,
+		.mouseX = 0,
+		.mouseY = 0,
+		.mouseDX = 0,
+		.mouseDY = 0,
+	};
+}
 
-	void resetMouseDelta()
-	{
-		mouseDX = 0;
-		mouseDY = 0;
-	}
-};
+uint8_t input_state_no_buttons(InputState istate)
+{
+	return !istate.forward && !istate.back && !istate.strafeLeft && !istate.strafeRight;
+}
 
-struct WindowContext
+void reset_mouse_delta(InputState *istate)
+{
+	istate->mouseDX = 0;
+	istate->mouseDY = 0;
+}
+
+typedef struct
 {
 	SDL_Window *window;
 	SDL_GLContext glCtx;
-
-	~WindowContext();
-};
+} WindowContext;
 
 /**
  * @brief Destroys this context at the end of its lifetime.
  * Use this with std::unique_ptr for best results.
  * 
  */
-WindowContext::~WindowContext()
+void sdl_quit(WindowContext *ctx)
 {
 	printf("Quitting...\n");
-	SDL_GL_DeleteContext(glCtx);
-	SDL_DestroyWindow(window);
+	SDL_GL_DeleteContext(ctx->glCtx);
+	SDL_DestroyWindow(ctx->window);
 	SDL_Quit();
 	printf("Bye.\n");
 }

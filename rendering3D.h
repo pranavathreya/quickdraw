@@ -1,4 +1,7 @@
+#pragma once
+
 #include <GL/glu.h>
+
 #include "variables.h"
 
 
@@ -13,7 +16,8 @@ void drawPlayerBody2D(Player _player)
 
 void drawPlayerWand2D(Player _player)
 {
-	Vec2 wand = (Vec2::angleToUnit(_player.playerAngle) * PLAYER_WAND_LENGTH);
+	Vec2 wand = vec2_angle_to_unit((_player.playerAngle) * PLAYER_WAND_LENGTH);
+	wand = vec2_correct_to_view(&wand);
 	glColor3f(1, 1, 0);
 	glLineWidth(3);
 	glBegin(GL_LINES);
@@ -33,12 +37,12 @@ int mapColumns = 8, mapRows = 8, mapBlockSideLength = 64;
 int map[]=
 {
 	1,1,1,1,1,1,1,1,
-	1,0,1,0,0,0,0,1,
-	1,0,1,0,0,0,0,1,
-	1,0,1,0,0,0,0,1,
-	1,0,1,0,0,0,0,1,
-	1,0,0,0,0,1,0,1,
 	1,0,0,0,0,0,0,1,
+	1,0,1,0,1,0,1,1,
+	1,0,0,0,0,0,0,1,
+	1,0,1,0,0,0,1,1,
+	1,0,0,0,0,0,0,1,
+	1,0,1,0,1,0,1,1,
 	1,1,1,1,1,1,1,1,
 };
 
@@ -66,7 +70,7 @@ void drawMap2D()
 		}
 }
 
-bool pointIsInWall(Vec2 position)
+uint8_t pointIsInWall(Vec2 position)
 {
 	int mapBlockIndex =
 		(mapColumns * (((int)position.y) / mapBlockSideLength)) + (((int)position.x) / mapBlockSideLength);
@@ -110,8 +114,9 @@ Ray findRayEndPointHorizontalTraversal(Ray ray, Player _player)
 	
 	//drawSingleRay(0, 1, ray, _player);
 	fprintf(stdout, "horizontal: rayLength: %f, rayEndX: %f, rayEndY: %f\n", ray.rayLength, ray.rayEndPosition.x, ray.rayEndPosition.y);
-	return ray;
+	drawSingleRay(0, 1, ray, _player);
 
+	return ray;
 }
 
 Ray findRayEndPointVerticalTraversal(Ray ray, Player _player)
@@ -131,6 +136,7 @@ Ray findRayEndPointVerticalTraversal(Ray ray, Player _player)
 	
 	//drawSingleRay(1, 3, ray, _player);
 	fprintf(stdout, "vertical: rayLength: %f, rayEndX: %f, rayEndY: %f\n", ray.rayLength, ray.rayEndPosition.x, ray.rayEndPosition.y);
+
 	return ray;
 
 }
@@ -147,7 +153,6 @@ void drawRays(const Player _player)
 {
 	struct Ray* rayArrayAddress = rayArray;	
 
-	fprintf(stdout, "rendering3D.h in: playerX: %f, playerY: %f\n", _player.position.x, _player.position.y);
 	float rayAngle = _player.playerAngle+(M_PI*0.25);
 	
 	while (rayAngle>=_player.playerAngle-(M_PI*0.25))
@@ -161,7 +166,6 @@ void drawRays(const Player _player)
 
 		rayAngle-=(M_PI*0.5/RAY_COUNT);
 	}
-	fprintf(stdout, "rendering3D.h out: playerX: %f, playerY: %f, rayAngle: %f\n", _player.position.x, _player.position.y, rayAngle);
 }
 
 void drawSingleColumn(Column column)

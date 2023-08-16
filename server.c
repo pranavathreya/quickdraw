@@ -5,7 +5,7 @@
 #include "networkTools.h"
 #include "variables.h"
 
-#define MSG_FLD_CNT 17777777
+#define MSG_FLD_CNT 17
 
 typedef struct ClientState
 {
@@ -27,7 +27,6 @@ void processClientMessage(char* message,
 		p = currentField;
 		memset(p, '\0', MSG_SIZE);
 		messageArray[i] = (char*) malloc(MSG_SIZE);
-		
 		while ((*p++ = *message++) != '\n')
 			;
 		*(p-1) = '\0';
@@ -35,7 +34,6 @@ void processClientMessage(char* message,
 		strncpy(messageArray[i], 
 				currentField, MSG_SIZE);
 	}
-
 	clientStatePtr->player.speed.x = 	atof(messageArray[0]);
 	clientStatePtr->player.speed.y = 	atof(messageArray[1]);
 	clientStatePtr->player.position.x = 	atof(messageArray[2]);
@@ -83,6 +81,7 @@ void serveClients(int sfd)
 				peerHost, NI_MAXHOST,
 				peerService, NI_MAXSERV, 0);
 
+
 		processClientMessage(buf, &clientState);
 		fprintf(stderr, "server: received client state:\n"
 				"player.speed.x:     %f\n"
@@ -90,13 +89,13 @@ void serveClients(int sfd)
 				"player.position.x:  %f\n"
 				"player.position.y:  %f\n"
 				"player.playerAngle: %f\n"
-				"istate.q: 	     %d\n"
-				"istate.forward:     %d\n"
-				"istate.left:	     %d\n"
-				"istate.back:        %d\n"
-				"istate.right:       %d\n"
-				"istate.strafeLeft:  %d\n"
-				"istate.strafeRight: %d\n"
+				"istate.q: 	     %u\n"
+				"istate.forward:     %u\n"
+				"istate.left:	     %u\n"
+				"istate.back:        %u\n"
+				"istate.right:       %u\n"
+				"istate.strafeLeft:  %u\n"
+				"istate.strafeRight: %u\n"
 				"istate.mouseX:      %u\n"
 				"istate.mouseY:      %u\n"
 				"istate.mouseDX:     %d\n"
@@ -104,19 +103,19 @@ void serveClients(int sfd)
 				"deltaTime: 	     %f\n", 
 			clientState.player.speed.x, clientState.player.speed.y,
 			clientState.player.position.x, clientState.player.position.y,
-			clientState.player.playerAngle);
-			istate->q,
-			istate->forward,
-			istate->left,
-			istate->back,
-			istate->right,
-			istate->strafeLeft,
-			istate->strafeRight,
-			istate->mouseX,
-			istate->mouseY,
-			istate->mouseDX,
-			istate->mouseDY,
-			deltaTime);
+			clientState.player.playerAngle,
+			clientState.istate.q,
+			clientState.istate.forward,
+			clientState.istate.left,
+			clientState.istate.back,
+			clientState.istate.right,
+			clientState.istate.strafeLeft,
+			clientState.istate.strafeRight,
+			clientState.istate.mouseX,
+			clientState.istate.mouseY,
+			clientState.istate.mouseDX,
+			clientState.istate.mouseDY,
+			clientState.deltaTime);
 	}	
 }
 
@@ -124,12 +123,13 @@ int main(int argc, char** argv)
 {
 	if (argc != 3)
 	{
-		fprintf(stderr, "Usage: %s hort port\n", argv[0]);
+		fprintf(stderr, "Usage: %s host port\n", argv[0]);
 		exit(EXIT_FAILURE);
 	}
 
 	int sfd;
 	
+	fprintf(stderr, "no seg faul before this: \n");
 	sfd = bindOrConnectToAddress(argv[1], argv[2], 1);
 
 	serveClients(sfd);

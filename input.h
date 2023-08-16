@@ -1,7 +1,6 @@
 #pragma once
 
 #include <SDL2/SDL.h>
-#include <iostream>
 
 #include "variables.h"
 #include "physics.h"
@@ -16,11 +15,11 @@ void setButtonState(SDL_Event e, InputState *istate, int state)
 	case SDLK_a:
 		if (e.key.keysym.mod & KMOD_CTRL)
 		{
-			istate->strafeLeft = state;
+			istate->left = state;
 		}
 		else
 		{
-			istate->left = state;
+			istate->strafeLeft = state;
 		}
 		break;
 	case SDLK_s:
@@ -29,11 +28,11 @@ void setButtonState(SDL_Event e, InputState *istate, int state)
 	case SDLK_d:
 		if (e.key.keysym.mod & KMOD_CTRL)
 		{
-			istate->strafeRight = state;
+			istate->right = state;
 		}
 		else
 		{
-			istate->right = state;
+			istate->strafeRight = state;
 		}
 		break;
 	};
@@ -48,18 +47,18 @@ InputState processInputEvents(InputState state)
 		switch (e.type)
 		{
 		case SDL_QUIT:
-			state.q = true;
+			state.q = 1;
 			break;
 		case SDL_KEYDOWN:
 			if (e.key.keysym.sym == SDLK_q)
 			{
-				state.q = true;
+				state.q = 1;
 				break;
 			}
-			setButtonState(e, &state, true);
+			setButtonState(e, &state, 1);
 			break;
 		case SDL_KEYUP:
-			setButtonState(e, &state, false);
+			setButtonState(e, &state, 0);
 			break;
 		case SDL_MOUSEMOTION:
 			state.mouseX = e.motion.x;
@@ -70,10 +69,5 @@ InputState processInputEvents(InputState state)
 		};
 	}
 
-	std::cout << "input handled." 
-			  << "w: " << state.forward << std::endl
-			  << "a: " << state.strafeLeft << std::endl
-			  << "s: " << state.back << std::endl
-			  << "d: " << state.strafeRight << std::endl;
 	return state;
 }
