@@ -114,7 +114,6 @@ Ray findRayEndPointHorizontalTraversal(Ray ray, Player _player)
 	
 	//drawSingleRay(0, 1, ray, _player);
 	fprintf(stdout, "horizontal: rayLength: %f, rayEndX: %f, rayEndY: %f\n", ray.rayLength, ray.rayEndPosition.x, ray.rayEndPosition.y);
-	drawSingleRay(0, 1, ray, _player);
 
 	return ray;
 }
