@@ -1,4 +1,5 @@
-#pragma once
+#ifndef VARIABLES
+#define VARIABLES
 
 #include <SDL2/SDL.h>
 
@@ -89,9 +90,9 @@ InputState inputstate_new() {
 	};
 }
 
-uint8_t input_state_no_buttons(InputState istate)
+uint8_t input_state_no_buttons(InputState* istate)
 {
-	return !istate.forward && !istate.back && !istate.strafeLeft && !istate.strafeRight;
+	return !istate->forward && !istate->back && !istate->strafeLeft && !istate->strafeRight;
 }
 
 void reset_mouse_delta(InputState *istate)
@@ -119,3 +120,4 @@ void sdl_quit(WindowContext *ctx)
 	SDL_Quit();
 	printf("Bye.\n");
 }
+#endif

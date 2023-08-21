@@ -1,4 +1,5 @@
-#pragma once
+#ifndef RENDERING_3D
+#define RENDERING_3D
 
 #include <GL/glu.h>
 
@@ -192,4 +193,4 @@ void drawColumns(const Player _player)
 		drawSingleColumn(column);
 	}
 }
-
+#endif
