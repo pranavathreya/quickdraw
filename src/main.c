@@ -6,6 +6,7 @@
 #include "physics.h"
 #include "input.h"
 #include "system.h"
+#include "networkTools.h"
 
 void init(Player *player)
 {
@@ -25,9 +26,9 @@ void display(Player *player)
 }
 
 
-#include "networkTools.h"
 int main(int argc, char *argv[])
 {
+	ClientState clientState;
 	int clientFileDes, serverFileDes;
 
 	Player *player = player_new();
@@ -35,7 +36,10 @@ int main(int argc, char *argv[])
 	init(player);
 	clientFileDes = bindOrConnectToAddress(argv[1], argv[2], 1);
 	serverFileDes = bindOrConnectToAddress(argv[1], argv[3], 0);
-	mainLoop(player, ctx->window, &display, serverFileDes);
+	
+	clientState.player = player;
+	mainLoop(&clientState, ctx->window, &display, serverFileDes);
+	
 	free(player);
 	sdl_quit(ctx);
 }
