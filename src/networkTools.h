@@ -9,6 +9,27 @@
 #include "variables.h"
 
 #define MSG_FLD_CNT 17
+#define HANDLE_W_ERR(s, n)\
+if (s!=n) {\
+	fprintf(stderr, "partial/failed write: %d/%d\n"\
+			, s, n);\
+       	exit(EXIT_FAILURE);\
+}
+#define HANDLE_R_ERR(s, n)\
+if (s!=n) {\
+	fprintf(stderr, "partial/failed read: %d/%d\n"\
+			, s, n);\
+       	exit(EXIT_FAILURE);\
+}
+
+#define LOG_W_BUF(n, buf)\
+fprintf(stderr, "wrote %d bytes of messageBuffer:\n%s",\
+		n, buf);
+
+#define LOG_R_BUF(n, buf)\
+fprintf(stderr, "read %d bytes of messageBuffer:\n%s",\
+		n, buf);
+
 
 typedef struct ClientState
 {
@@ -18,6 +39,12 @@ typedef struct ClientState
 
 	
 } ClientState;
+
+typedef struct NameInfo
+{
+	char host[NI_MAXHOST];
+	char serv[NI_MAXSERV];
+} NameInfo;
 
 void encodeClientState(char* buf, int bufSize,
 	       	ClientState* clientState)
@@ -92,7 +119,7 @@ void decodeClientState(char* message,
 
 void logClientState(const ClientState* clientState)
 {
-		fprintf(stderr, "server: received client state:\n"
+		fprintf(stderr, "logClientState: received client state:\n"
 				"player.speed.x:     %f\nplayer.speed.y:     %f\n"
 				"player.position.x:  %f\nplayer.position.y:  %f\n"
 				"player.playerAngle: %f\nistate.q: 	     %u\n"
@@ -138,10 +165,26 @@ void getAddressInfo(char* host, char* port,
 	}
 }
 
+void _getNameInfo(struct sockaddr* ai_addr, socklen_t ai_addrlen,
+		NameInfo* nameInfo)
+{
+	int s;
+	s = getnameinfo(ai_addr, ai_addrlen,
+			nameInfo->host, NI_MAXHOST,
+			nameInfo->serv, NI_MAXSERV, 0);
+	if (s!=0) {
+		fprintf(stderr, "_getNameInfo: getnameinfo failed: %s\n", gai_strerror(s));
+		fprintf(stderr, "sa_family: %d\nsa_data: %s\n", ai_addr->sa_family,
+				ai_addr->sa_data);
+		exit(EXIT_FAILURE);
+	}
+}
+
 int getSocket(int _bind, struct addrinfo *result)
 {
 	struct addrinfo *rp;
 	int sfd;
+	NameInfo nameInfo;
 	
 	for (rp=result; rp!=NULL; rp=rp->ai_next)
 	{
@@ -167,14 +210,10 @@ int getSocket(int _bind, struct addrinfo *result)
 		fprintf(stderr, "server: Failed to bind.\n");
 		exit(EXIT_FAILURE);
 	}
-
-	char finalHost[NI_MAXHOST], serv[NI_MAXSERV];
-
-	getnameinfo(rp->ai_addr, rp->ai_addrlen,
-			finalHost, NI_MAXHOST,
-			serv, NI_MAXSERV, 0);
-	fprintf(stderr, "getServerFileDescriptor: successfully %s to: %s:%s\n",
-		       _bind ? "bound" : "connected",	finalHost, serv);
+	
+	_getNameInfo(rp->ai_addr, rp->ai_addrlen, &nameInfo);
+	fprintf(stderr, "getSocket: successfully %s to: %s:%s\n",
+		       _bind ? "bound" : "connected",	nameInfo.host, nameInfo.serv);
 
 	return sfd;
 	

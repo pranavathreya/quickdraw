@@ -1,2 +1,2 @@
-bin/server.o localhost 8080 2> logs/server.log &
+bin/server.o localhost 5001 2> logs/server.log &
 

@@ -8,46 +8,36 @@
 void serveClients(int sfd)
 {
 	char buf[MSG_SIZE], response[MSG_SIZE];
-	struct sockaddr peerAddr;
+	struct sockaddr_storage peerAddr;
 	socklen_t peerAddrLen;
 	int bytesRead, s;
-	ClientState clientState;
+	NameInfo nameInfo;
+	Player player;
+	InputState istate = inputstate_new();
+	ClientState clientState = {
+		&player,
+		&istate,
+		0
+	};
 
 	for(;;)
 	{
 		memset(buf, 0, MSG_SIZE);
 		peerAddrLen = sizeof(peerAddr);
 		bytesRead = recvfrom(sfd, buf, MSG_SIZE, 0,
-					&peerAddr, &peerAddrLen);
-		
-		if (bytesRead != MSG_SIZE)
-		{
-			fprintf(stderr, "server: failed to receive bytes from peer.\n");
-			exit(EXIT_FAILURE);
-		}
-		char peerHost[NI_MAXHOST], peerService[NI_MAXSERV];
-		s = getnameinfo(&peerAddr, peerAddrLen, 
-				peerHost, NI_MAXHOST,
-				peerService, NI_MAXSERV, 0);
-		if (s!=0) {
-			fprintf(stderr, "getnameinfo: %s\n", gai_strerror(s));
-			exit(EXIT_FAILURE);
-		}
+			       (struct sockaddr*) &peerAddr, &peerAddrLen);
+		HANDLE_R_ERR(bytesRead, MSG_SIZE);
+		LOG_R_BUF(bytesRead, buf);
 
 		decodeClientState(buf, &clientState);
-		logClientState(&clientState);
-
-		updatePhysics(clientState.player, clientState.istate,
-			       clientState.deltaTime);
-
+		updatePhysics(clientState.player, clientState.istate, clientState.deltaTime);
 		encodeClientState(response, MSG_SIZE, &clientState);
-
-		if (sendto(sfd, response, MSG_SIZE, 0,
-				&peerAddr, peerAddrLen)!=MSG_SIZE) {
-			fprintf(stderr, "server: failed to send bytes to peer\n");
-			exit(EXIT_FAILURE);
-		}
-	}	
+		
+		s = sendto(sfd, response, MSG_SIZE, 0,
+			       	(struct sockaddr*) &peerAddr, peerAddrLen);
+		HANDLE_W_ERR(s, MSG_SIZE);	
+		LOG_W_BUF(s, response);
+	}
 }
 
 int main(int argc, char** argv)

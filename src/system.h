@@ -7,17 +7,6 @@
 #include "input.h"
 #include "physics.h"
 
-#define HANDLE_RW_ERR(s)\
-if (s!=0) {\
-	fprintf(stderr, "client: partial/failed write: %d/%d\n"\
-			, s, MSG_SIZE);\
-       	exit(EXIT_FAILURE);\
-}
-
-#define LOG_RW_BUF(n, buf)\
-fprintf(stderr, "client: wrote %d bytes of messageBuffer to server:\n%s",\
-		bytesWritten, messageBuffer);
-
 /**
  * @brief To correctly manage this pointer, the caller must call sdl_quit()
  * 
@@ -63,13 +52,13 @@ void updateClientPhysics(int serverFileDes, char* messageBuffer, ClientState* cl
 	memset(messageBuffer, '\0', MSG_SIZE);
 	encodeClientState(messageBuffer, MSG_SIZE, clientState);
 	bytesWritten = write(serverFileDes, messageBuffer, MSG_SIZE);
-	HANDLE_RW_ERR(bytesWritten);
-	LOG_RW_BUF(bytesWritten, messageBuffer);
+	HANDLE_W_ERR(bytesWritten, MSG_SIZE);
+	LOG_W_BUF(bytesWritten, messageBuffer);
 
 	memset(messageBuffer, '\0', MSG_SIZE);
 	bytesRead = read(serverFileDes, messageBuffer, MSG_SIZE);
-	HANDLE_RW_ERR(bytesRead);
-	LOG_RW_BUF(bytesRead, messageBuffer);
+	HANDLE_R_ERR(bytesRead, MSG_SIZE);
+	LOG_R_BUF(bytesRead, messageBuffer);
 	decodeClientState(messageBuffer, clientState);
 }
 
@@ -97,8 +86,6 @@ void mainLoop(ClientState* clientState, SDL_Window *window, void (*displayCallba
 			break;
 		
 		updateClientPhysics(serverFileDes, messageBuffer, clientState);
-		updatePhysics(clientState->player, clientState->istate,
-			       clientState->deltaTime);
 		reset_mouse_delta(clientState->istate);
 
 		displayCallback(clientState->player);
