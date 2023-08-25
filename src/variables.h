@@ -1,7 +1,8 @@
-#ifndef VARIABLES
-#define VARIABLES
+#pragma once
 
+#ifdef CLIENT
 #include <SDL2/SDL.h>
+#endif
 
 #include "mathdefinitions.h"
 
@@ -9,7 +10,7 @@
 #define HEIGHT 512 
 #define PLAYER_WAND_LENGTH 18.0
 #define RAY_COUNT 200
-#define MSG_SIZE 500 
+#define MSG_SIZE sizeof(InputState) + sizeof(Player) + sizeof(float) 
 
 typedef struct Player
 {
@@ -101,6 +102,7 @@ void reset_mouse_delta(InputState *istate)
 	istate->mouseDY = 0;
 }
 
+#ifdef CLIENT
 typedef struct
 {
 	SDL_Window *window;

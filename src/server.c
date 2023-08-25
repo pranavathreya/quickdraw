@@ -2,6 +2,9 @@
 #include <stdlib.h> 
 #include <netdb.h>
 #include <sys/socket.h>
+
+#undef CLIENT
+
 #include "networkTools.h"
 #include "physics.h"
 
@@ -11,7 +14,14 @@ void serveClients(int sfd)
 	struct sockaddr peerAddr;
 	socklen_t peerAddrLen;
 	int bytesRead, s;
-	ClientState clientState;
+	NameInfo nameInfo;
+	Player player = {};
+	InputState istate = inputstate_new();
+	ClientState clientState = {
+		&player,
+		&istate,
+		0
+	};
 
 	for(;;)
 	{
@@ -60,7 +70,7 @@ int main(int argc, char** argv)
 
 	int sfd;
 	
-	sfd = bindOrConnectToAddress(argv[1], argv[2], 1);
+	sfd = bindToAddress(argv[1], argv[2]);
 
 	serveClients(sfd);
 }

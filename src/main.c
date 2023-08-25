@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <SDL2/SDL.h>
 
+#define CLIENT
+
 #include "variables.h"
 #include "rendering3D.h"
 #include "physics.h"
@@ -34,8 +36,8 @@ int main(int argc, char *argv[])
 	Player *player = player_new();
 	WindowContext *ctx = sdl_init();
 	init(player);
-	clientFileDes = bindOrConnectToAddress(argv[1], argv[2], 1);
-	serverFileDes = bindOrConnectToAddress(argv[1], argv[3], 0);
+	clientFileDes = bindToAddress("localhost", argv[2]);
+	serverFileDes = connectToAddress(argv[1], argv[3]);
 	
 	clientState.player = player;
 	mainLoop(&clientState, ctx->window, &display, serverFileDes);
