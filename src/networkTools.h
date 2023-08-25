@@ -1,11 +1,11 @@
-#ifndef NETWORK_TOOLS_HDR
-#define NETWORK_TOOLS_HDR
+#pragma once
 
 #include <sys/socket.h>
 #include <netdb.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "variables.h"
 
 #define MSG_FLD_CNT 17
@@ -22,72 +22,18 @@ typedef struct ClientState
 void encodeClientState(char* buf, int bufSize,
 	       	ClientState* clientState)
 {
-	snprintf(buf, bufSize,
-		"%f\n%f\n%f\n%f\n%f\n%d\n%d\n%d\n%d"
-		"\n%d\n%d\n%d\n%u\n%u\n%d\n%d\n%f\n", 
-		clientState->player->speed.x,
-		clientState->player->speed.y,
-		clientState->player->position.x,
-		clientState->player->position.y,
-		clientState->player->playerAngle,
-		clientState->istate->q,
-		clientState->istate->forward,
-		clientState->istate->left,
-		clientState->istate->back,
-		clientState->istate->right,
-		clientState->istate->strafeLeft,
-		clientState->istate->strafeRight,
-		clientState->istate->mouseX,
-		clientState->istate->mouseY,
-		clientState->istate->mouseDX,
-		clientState->istate->mouseDY,
-		clientState->deltaTime);
-}
-
-void populateClientState(char* messageArray[], ClientState* clientStatePtr)
-{
-	char *endptr;
-
-	clientStatePtr->player->speed.x = 	atof(messageArray[0]);
-	clientStatePtr->player->speed.y = 	atof(messageArray[1]);
-	clientStatePtr->player->position.x = 	atof(messageArray[2]);
-	clientStatePtr->player->position.y = 	atof(messageArray[3]);
-	clientStatePtr->player->playerAngle = 	atof(messageArray[4]);
-	clientStatePtr->istate->q = 		atoi(messageArray[5]);
-	clientStatePtr->istate->forward = 	atoi(messageArray[6]);
-	clientStatePtr->istate->left = 		atoi(messageArray[7]);
-	clientStatePtr->istate->back = 		atoi(messageArray[8]);
-	clientStatePtr->istate->right = 	atoi(messageArray[9]);
-	clientStatePtr->istate->strafeLeft = 	atoi(messageArray[10]);
-	clientStatePtr->istate->strafeRight = 	atoi(messageArray[11]);
-	clientStatePtr->istate->mouseX = 	strtoul(messageArray[12], &endptr, 10);
-	clientStatePtr->istate->mouseY = 	strtoul(messageArray[13], &endptr, 10);
-	clientStatePtr->istate->mouseDX = 	strtol(messageArray[14], &endptr, 10);
-	clientStatePtr->istate->mouseDY = 	strtol(messageArray[15], &endptr, 10);
-	clientStatePtr->deltaTime = 		atof(messageArray[16]);
+	int bytesRead = 0;
+	memcpy(buf, clientState->player, sizeof(Player));
+	memcpy(buf + sizeof(Player), clientState->istate, sizeof(InputState));
+	memcpy(buf + sizeof(Player) + sizeof(InputState), &(clientState->deltaTime), sizeof(float));
 }
 
 void decodeClientState(char* message,
 		ClientState* clientStatePtr)
 {
-	char* messageArray[MSG_FLD_CNT];
-	char *p, currentField[MSG_SIZE];
-
-	for (int i=0; i < MSG_FLD_CNT; ++i) {
-		p = currentField;
-		memset(p, '\0', MSG_SIZE);
-		messageArray[i] = (char*) malloc(MSG_SIZE);
-		while ((*p++ = *message++) != '\n')
-			;
-		*(p-1) = '\0';
-		strncpy(messageArray[i], 
-				currentField, MSG_SIZE);
-	}
-	
-	populateClientState(messageArray, clientStatePtr);
-
-	for (int i=0; i < MSG_FLD_CNT; ++i)
-		free(messageArray[i]);
+	memcpy(clientStatePtr->player, message, sizeof(Player));
+	memcpy(clientStatePtr->istate, message + sizeof(Player), sizeof(InputState));
+	memcpy(&(clientStatePtr->deltaTime), message + sizeof(Player) + sizeof(InputState), sizeof(float));
 }
 
 void logClientState(const ClientState* clientState)
@@ -192,4 +138,11 @@ int bindOrConnectToAddress(char* host, char* port,
 	
 	return sfd;
 }
-#endif
+
+int bindToAddress(char* host, char* port) {
+	return bindOrConnectToAddress(host, port, 1);
+}
+
+int connectToAddress(char* host, char* port) {
+	return bindOrConnectToAddress(host, port, 0);
+}
