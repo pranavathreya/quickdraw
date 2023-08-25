@@ -190,3 +190,11 @@ Vec2 vec2_perpendicular_right(Vec2 *self)
 }
 
 float dot(Vec2 *left, Vec2 *b) { return left->x * b->x + left->y * b->y; }
+
+#ifndef FLT_EPSILON
+	#define FLT_EPSILON    1.192092896e-07F
+#endif
+
+#ifndef M_PI
+    #define M_PI 3.1415926535897932384626433832795
+#endif

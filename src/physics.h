@@ -1,9 +1,30 @@
-#ifndef PHYSICS
-#define PHYSICS
+#pragma once
 
 #include <math.h>
-#include "rendering3D.h"
 #include "variables.h"
+
+int mapColumns = 8, mapRows = 8, mapBlockSideLength = 64;
+
+int map[]=
+{
+	1,1,1,1,1,1,1,1,
+	1,0,0,0,0,0,0,1,
+	1,0,1,0,1,0,1,1,
+	1,0,0,0,0,0,0,1,
+	1,0,1,0,0,0,1,1,
+	1,0,0,0,0,0,0,1,
+	1,0,1,0,1,0,1,1,
+	1,1,1,1,1,1,1,1,
+};
+
+uint8_t pointIsInWall(Vec2 position)
+{
+	int mapBlockIndex =
+		(mapColumns * (((int)position.y) / mapBlockSideLength)) + (((int)position.x) / mapBlockSideLength);
+	if (mapBlockIndex > 63 || mapBlockIndex < 0)
+		return 1;
+	return (map[mapBlockIndex] == 1);
+}
 
 float calculateNewOrientation(InputState* istate, float oldAngle, float deltaTime)
 {
@@ -107,5 +128,3 @@ void updatePhysics(Player* player, InputState* istate, double milliDeltaTime)
 	player->position = newPosition;
 	player->playerAngle = newAngle;
 }
-#endif
-

@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef CLIENT
+
 #include <SDL2/SDL.h>
 
 #include "variables.h"
@@ -71,3 +73,5 @@ InputState processInputEvents(InputState state)
 
 	return state;
 }
+
+#endif
