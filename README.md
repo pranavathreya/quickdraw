@@ -1,7 +1,14 @@
 # Quickdraw
 ```
-compile_scripts/compile_server.sh; compile_scripts/compile_server.sh
+make compile_server
 ```
 ```
-run_scripts/run_server.sh; run_sripts/run_client.sh
+make compile_client
 ```
+```
+make run_server
+```
+```
+make run_client
+```
+
