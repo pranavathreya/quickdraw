@@ -9,6 +9,27 @@
 #include "variables.h"
 
 #define MSG_FLD_CNT 17
+#define HANDLE_W_ERR(s, n)\
+if (s!=n) {\
+	fprintf(stderr, "partial/failed write: %d/%lu\n"\
+			, s, n);\
+       	exit(EXIT_FAILURE);\
+}
+#define HANDLE_R_ERR(s, n)\
+if (s!=n) {\
+	fprintf(stderr, "partial/failed read: %d/%lu\n"\
+			, s, n);\
+       	exit(EXIT_FAILURE);\
+}
+
+#define LOG_W_BUF(n, buf)\
+fprintf(stderr, "wrote %d bytes of messageBuffer:\n%s",\
+		n, buf);
+
+#define LOG_R_BUF(n, buf)\
+fprintf(stderr, "read %d bytes of messageBuffer:\n%s",\
+		n, buf);
+
 
 typedef struct ClientState
 {
