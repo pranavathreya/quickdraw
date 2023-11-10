@@ -3,7 +3,7 @@
 #include <SDL2/SDL.h>
 #include <unistd.h>
 #include <netdb.h>
-
+#include "networkTools.h"
 #include "input.h"
 #include "physics.h"
 
@@ -45,49 +45,31 @@ WindowContext *sdl_init()
 	return ctx;
 }
 
-void sendMessageToServer(int serverFileDes, char* messageBuffer, const Player *player,
-	       InputState *istate, double deltaTime)
+void updateClientPhysics(int serverFileDes, char* messageBuffer, ClientState* clientState)
 {
-	int errsv, bytesWritten;
+	int errsv, bytesWritten, bytesRead;
 
 	memset(messageBuffer, '\0', MSG_SIZE);
-	snprintf(messageBuffer, MSG_SIZE,
-		       	"%f\n%f\n%f\n%f\n%f\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%u\n%u\n%d\n%d\n%f\n", 
-			player->speed.x,
-			player->speed.y,
-			player->position.x,
-			player->position.y,
-			player->playerAngle,
-			istate->q,
-			istate->forward,
-			istate->left,
-			istate->back,
-			istate->right,
-			istate->strafeLeft,
-			istate->strafeRight,
-			istate->mouseX,
-			istate->mouseY,
-			istate->mouseDX,
-			istate->mouseDY,
-			deltaTime);
+	encodeClientState(messageBuffer, MSG_SIZE, clientState);
 	bytesWritten = write(serverFileDes, messageBuffer, MSG_SIZE);
-	if (bytesWritten != MSG_SIZE) 
-	{
-		fprintf(stderr, "partial/failed write: %d/%d\n", bytesWritten, MSG_SIZE);
-		exit(EXIT_FAILURE);
-	}
+	HANDLE_W_ERR(bytesWritten, MSG_SIZE);
+	LOG_W_BUF(bytesWritten, messageBuffer);
 
-	fprintf(stderr, "client: wrote %d bytes of messageBuffer to server:\n%s",
-		       	bytesWritten, messageBuffer);
+	memset(messageBuffer, '\0', MSG_SIZE);
+	bytesRead = read(serverFileDes, messageBuffer, MSG_SIZE);
+	HANDLE_R_ERR(bytesRead, MSG_SIZE);
+	LOG_R_BUF(bytesRead, messageBuffer);
+	decodeClientState(messageBuffer, clientState);
 }
 
-void mainLoop(Player *player, SDL_Window *window, void (*displayCallback)(Player *), int serverFileDes) {
+void mainLoop(ClientState* clientState, SDL_Window *window, void (*displayCallback)(Player *), int serverFileDes) {
 
-	InputState istate = inputstate_new();
 	uint64_t NOW = SDL_GetPerformanceCounter();
 	uint64_t LAST = 0;
-	double deltaTime = 0;
 	char messageBuffer[MSG_SIZE];
+	InputState istate =  inputstate_new();
+	clientState->istate = &istate;
+	clientState->deltaTime = 0;
 
 	// While application is running
 	while (1)
@@ -95,7 +77,7 @@ void mainLoop(Player *player, SDL_Window *window, void (*displayCallback)(Player
 		LAST = NOW;
 		NOW = SDL_GetPerformanceCounter();
 
-		deltaTime =
+		clientState->deltaTime =
 			(double)((NOW - LAST) * 1000 / (double)SDL_GetPerformanceFrequency());
 
 		istate = processInputEvents(istate);
@@ -103,12 +85,10 @@ void mainLoop(Player *player, SDL_Window *window, void (*displayCallback)(Player
 		if (istate.q)
 			break;
 		
-		sendMessageToServer(serverFileDes, messageBuffer, player, &istate, deltaTime);
-		//exit(EXIT_SUCCESS);
-		*player = updatePhysics(*player, istate, deltaTime);
-		reset_mouse_delta(&istate);
+		updateClientPhysics(serverFileDes, messageBuffer, clientState);
+		reset_mouse_delta(clientState->istate);
 
-		displayCallback(player);
+		displayCallback(clientState->player);
 		SDL_GL_SwapWindow(window);
 	}
 }

@@ -1,7 +1,10 @@
 #pragma once
 
+#ifdef CLIENT
+
 #include <GL/glu.h>
 
+#include "physics.h"
 #include "variables.h"
 
 
@@ -32,20 +35,6 @@ void drawPlayer2D(Player _player)
 	drawPlayerWand2D(_player);
 }
 
-int mapColumns = 8, mapRows = 8, mapBlockSideLength = 64;
-
-int map[]=
-{
-	1,1,1,1,1,1,1,1,
-	1,0,0,0,0,0,0,1,
-	1,0,1,0,1,0,1,1,
-	1,0,0,0,0,0,0,1,
-	1,0,1,0,0,0,1,1,
-	1,0,0,0,0,0,0,1,
-	1,0,1,0,1,0,1,1,
-	1,1,1,1,1,1,1,1,
-};
-
 void drawSingleBlock2D(int currentMapColumn, int currentMapRow, int blockPadding)
 {
 	glBegin(GL_QUADS);
@@ -68,15 +57,6 @@ void drawMap2D()
 
 			drawSingleBlock2D(currentColumn, currentRow, 1);
 		}
-}
-
-uint8_t pointIsInWall(Vec2 position)
-{
-	int mapBlockIndex =
-		(mapColumns * (((int)position.y) / mapBlockSideLength)) + (((int)position.x) / mapBlockSideLength);
-	if (mapBlockIndex > 63 || mapBlockIndex < 0)
-		return 1;
-	return (map[mapBlockIndex] == 1);
 }
 
 void drawSingleRay(int redOrGreen, int lineWidth, Ray ray, Player _player)
@@ -192,4 +172,4 @@ void drawColumns(const Player _player)
 		drawSingleColumn(column);
 	}
 }
-
+#endif
