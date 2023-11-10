@@ -11,13 +11,13 @@
 #define MSG_FLD_CNT 17
 #define HANDLE_W_ERR(s, n)\
 if (s!=n) {\
-	fprintf(stderr, "partial/failed write: %d/%d\n"\
+	fprintf(stderr, "partial/failed write: %d/%lu\n"\
 			, s, n);\
        	exit(EXIT_FAILURE);\
 }
 #define HANDLE_R_ERR(s, n)\
 if (s!=n) {\
-	fprintf(stderr, "partial/failed read: %d/%d\n"\
+	fprintf(stderr, "partial/failed read: %d/%lu\n"\
 			, s, n);\
        	exit(EXIT_FAILURE);\
 }
