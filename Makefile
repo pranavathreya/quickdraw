@@ -8,5 +8,5 @@ run_server:
 	./server.o 0.0.0.0 5001 2> logs/server.log &
 
 run_client:
-	./run_client.sh
+	./run_client.sh 0.0.0.0
 
