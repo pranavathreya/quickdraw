@@ -7,6 +7,8 @@
 #include "input.h"
 #include "physics.h"
 
+#ifdef CLIENT
+
 /**
  * @brief To correctly manage this pointer, the caller must call sdl_quit()
  * 
@@ -92,3 +94,5 @@ void mainLoop(ClientState* clientState, SDL_Window *window, void (*displayCallba
 		SDL_GL_SwapWindow(window);
 	}
 }
+
+#endif

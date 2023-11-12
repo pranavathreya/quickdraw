@@ -1,6 +1,7 @@
 #pragma once
 
 #include <math.h>
+#include <stdint.h>
 #include "variables.h"
 
 int mapColumns = 8, mapRows = 8, mapBlockSideLength = 64;

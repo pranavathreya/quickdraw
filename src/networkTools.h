@@ -30,7 +30,6 @@ fprintf(stderr, "wrote %d bytes of messageBuffer:\n%s",\
 fprintf(stderr, "read %d bytes of messageBuffer:\n%s",\
 		n, buf);
 
-
 typedef struct ClientState
 {
 	Player* player;
