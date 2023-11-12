@@ -1,3 +1,7 @@
+all_server: compile_server run_server
+
+all_client: compile_client compile_server
+
 compile_server:
 	gcc src/server.c -o server.o -lm -g 
 
